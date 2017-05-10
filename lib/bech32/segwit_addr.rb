@@ -6,6 +6,7 @@ module Bech32
     attr_accessor :prog # witness program
 
     def initialize(addr = nil)
+      @hrp = 'bc'
       parse_addr(addr) if addr
     end
 
@@ -13,6 +14,13 @@ module Bech32
     def to_script_pubkey
       v = ver == 0 ? ver : ver + 0x80
       ([v, prog.length].pack("CC") + prog.map{|p|[p].pack("C")}.join).unpack('H*').first
+    end
+
+    # parse script pubkey into witness version and witness program
+    def script_pubkey=(script_pubkey)
+      values = [script_pubkey].pack('H*').unpack("C*")
+      @ver = values[0]
+      @prog = values[2..-1]
     end
 
     # Returns segwit address string which generated from hrp, witness version and witness program.
