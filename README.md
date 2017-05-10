@@ -47,6 +47,7 @@ hrp, data = Bech32.decode('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4')
 Decode Bech32-encoded Segwit address into `Bech32::SegwitAddr` instance.
 
 ```ruby
+addr = 'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4'
 segwit_addr = Bech32::SegwitAddr.new(addr)
 
 # generate script pubkey
