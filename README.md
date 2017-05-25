@@ -1,4 +1,4 @@
-# Bech32 [![Build Status](https://travis-ci.org/azuchi/bech32rb.svg?branch=master)](https://travis-ci.org/azuchi/bech32rb) [![Gem Version](https://badge.fury.io/rb/bech32.svg)](https://badge.fury.io/rb/bech32) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+# Bech32 [![Build Status](https://travis-ci.org/azuchi/bech32rb.svg?branch=master)](https://travis-ci.org/azuchi/bech32rb) [![Gem Version](https://badge.fury.io/rb/bech32.svg)](https://badge.fury.io/rb/bech32) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 The implementation of the Bech32 encoder and decoder for Ruby.
 
