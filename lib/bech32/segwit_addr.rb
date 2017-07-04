@@ -1,12 +1,16 @@
 module Bech32
 
   class SegwitAddr
+
+    HRP_MAINNET = 'bc'
+    HRP_TESTNET = 'tb'
+
     attr_accessor :hrp # human-readable part
     attr_accessor :ver # witness version
     attr_accessor :prog # witness program
 
     def initialize(addr = nil)
-      @hrp = 'bc'
+      @hrp = HRP_MAINNET
       parse_addr(addr) if addr
     end
 
@@ -32,7 +36,7 @@ module Bech32
 
     def parse_addr(addr)
       @hrp, data = Bech32.decode(addr)
-      raise 'Invalid address.' if @hrp.nil? || (@hrp != 'bc' && @hrp != 'tb')
+      raise 'Invalid address.' if @hrp.nil? || ![HRP_MAINNET, HRP_TESTNET].include?(@hrp)
       @ver = data[0]
       raise 'Invalid witness version' if @ver > 16
       @prog = convert_bits(data[1..-1], 5, 8, false)
