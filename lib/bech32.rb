@@ -34,6 +34,8 @@ module Bech32
   #   [0, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22] # data
   #
   def decode(bech)
+    # check invalid bytes
+    return nil if bech.scrub('?').include?('?')
     # check uppercase/lowercase
     return nil if (bech.downcase != bech && bech.upcase != bech)
     bech.each_char{|c|return nil if c.ord < 33 || c.ord > 126}

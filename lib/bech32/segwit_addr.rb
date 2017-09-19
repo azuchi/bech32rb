@@ -36,7 +36,7 @@ module Bech32
 
     def parse_addr(addr)
       @hrp, data = Bech32.decode(addr)
-      raise 'Invalid address.' if @hrp.nil? || ![HRP_MAINNET, HRP_TESTNET].include?(@hrp)
+      raise 'Invalid address.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET].include?(hrp)
       @ver = data[0]
       raise 'Invalid witness version' if @ver > 16
       @prog = convert_bits(data[1..-1], 5, 8, false)
