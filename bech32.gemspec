@@ -1,10 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'bech32/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "bech32"
-  spec.version       = "1.0.2"
+  spec.version       = Bech32::VERSION
   spec.authors       = ["Shigeyuki Azuchi"]
   spec.email         = ["azuchi@haw.co.jp"]
 
