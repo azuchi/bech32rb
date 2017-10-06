@@ -23,7 +23,7 @@ module Bech32
     # parse script pubkey into witness version and witness program
     def script_pubkey=(script_pubkey)
       values = [script_pubkey].pack('H*').unpack("C*")
-      @ver = values[0]
+      @ver = values[0] == 0 ? values[0] : values[0] - 0x50
       @prog = values[2..-1]
     end
 

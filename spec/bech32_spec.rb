@@ -70,6 +70,11 @@ describe Bech32 do
       expect(segwit_addr.ver).to be_truthy
       expect(segwit_addr.to_script_pubkey).to eq(hex)
       expect(segwit_addr.addr).to eq(addr.downcase)
+      # from hex
+      segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.hrp = addr[0..1].downcase
+      segwit_addr.script_pubkey = hex
+      expect(segwit_addr.addr).to eq(addr.downcase)
     end
   end
 
