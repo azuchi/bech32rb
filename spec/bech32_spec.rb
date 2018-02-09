@@ -90,4 +90,20 @@ describe Bech32 do
     expect(segwit_addr.addr).to eq('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4'.downcase)
   end
 
+  OVER_MAXIMUM_CHARACTER = [
+      'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w',
+      'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmm7s34n6'
+  ]
+
+  it 'advanced length option checked' do
+    # over character decode
+    expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[0])).to be_nil
+    expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[0], 242)).to be_nil
+    expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[0], 243)).not_to be_nil
+    expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[1])).to be_nil
+    expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[1], 91)).not_to be_nil
+    # default maximum character
+    expect(Bech32.decode('lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmwed074')).not_to be_nil
+  end
+
 end

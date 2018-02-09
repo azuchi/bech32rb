@@ -33,7 +33,7 @@ module Bech32
   #   'bc' # hrp
   #   [0, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22] # data
   #
-  def decode(bech)
+  def decode(bech, max_length = 90)
     # check invalid bytes
     return nil if bech.scrub('?').include?('?')
     # check uppercase/lowercase
@@ -42,7 +42,7 @@ module Bech32
     bech = bech.downcase
     # check data length
     pos = bech.rindex(SEPARATOR)
-    return nil if pos.nil? || pos + 7 > bech.length || bech.length > 90
+    return nil if pos.nil? || pos + 7 > bech.length || bech.length > max_length
     # check valid charset
     bech[pos+1..-1].each_char{|c|return nil unless CHARSET.include?(c)}
     # split hrp and data

@@ -55,6 +55,20 @@ segwit_addr.to_script_pubkey
 => 0014751e76e8199196d454941c45d1b3a323f1433bd6
 ```
 
+#### Advanced
+
+The maximum number of characters of Bech32 defined in [BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki) is limited to 90 characters.
+However, LN specification [BOLT#11](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md) has no limitation.
+
+To decode data of more than 90 characters, specify `max_length` at decode as below. (The default value of `max_length` is 90.)
+
+```ruby
+MAX_INTEGER = 2**31 - 1
+Bech32.decode(bechString, MAX_INTEGER)
+```
+
+Note that between length of the addresses and the error-detection capabilities are [trade-off](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#checksum-design).
+
 ### Encode
 
 Encode Bech32 human-readable part and data part into Bech32 string.
