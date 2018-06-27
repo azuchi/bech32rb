@@ -31,6 +31,7 @@ describe Bech32 do
       ["bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj", "5210751e76e8199196d454941c45d1b3a323"],
       ["tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy",
        "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"],
+      ["bcrt1q8w9txuafw0q3lvhqrdsl49fea53h7rfwulh46h", "00143b8ab373a973c11fb2e01b61fa9539ed237f0d2e"]
   ]
 
   INVALID_ADDRESS = [
@@ -72,7 +73,7 @@ describe Bech32 do
       expect(segwit_addr.addr).to eq(addr.downcase)
       # from hex
       segwit_addr = Bech32::SegwitAddr.new
-      segwit_addr.hrp = addr[0..1].downcase
+      segwit_addr.hrp = addr[0...addr.index('1')].downcase
       segwit_addr.script_pubkey = hex
       expect(segwit_addr.addr).to eq(addr.downcase)
     end
