@@ -22,7 +22,7 @@ module Bech32
     hrp + SEPARATOR + checksummed.map{|i|CHARSET[i]}.join
   end
 
-  # Returns the Bach32 decoded hrp and data.
+  # Returns the Bech32 decoded hrp and data.
   #
   #   require 'bech32'
   #
