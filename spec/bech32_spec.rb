@@ -4,21 +4,28 @@ describe Bech32 do
 
   VALID_CHECKSUM = [
       "A12UEL5L",
+      "a12uel5l",
       "an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1tt5tgs",
       "abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw",
       "11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247j",
       "split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w",
+      "?1ezyfcl"
   ]
 
   INVALID_CHECKSUM = [
-      " 1nwldj5",
-      "\x7F" + "1axkwrx",
+      " 1nwldj5",         # HRP character out of range
+      "\x7F" + "1axkwrx", # HRP character out of range
+      "\x80" + "1eym55h", # HRP character out of range
+      # overall max length exceeded
       "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1569pvx",
-      "pzry9x0s0muk",
-      "1pzry9x0s0muk",
-      "x1b4n0q5v",
-      "li1dgmt3",
-      "de1lg7wt\xff",
+      "pzry9x0s0muk",     # No separator character
+      "1pzry9x0s0muk",    # Empty HRP
+      "x1b4n0q5v",        # Invalid data character
+      "li1dgmt3",         # Too short checksum
+      "de1lg7wt\xff",     # Invalid character in checksum
+      "A1G7SGD8",         # checksum calculated with uppercase form of HRP
+      "10a06t8",          # empty HRP
+      "1qzzfhee",         # empty HRP
   ]
 
   VALID_ADDRESS = [
