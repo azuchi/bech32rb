@@ -30,19 +30,21 @@ module Bech32
 
     # Returns segwit address string which generated from hrp, witness version and witness program.
     def addr
-      Bech32.encode(hrp, [ver] + convert_bits(prog, 8, 5))
+      spec = (ver == 0 ? Bech32::Encoding::BECH32 : Bech32::Encoding::BECH32M)
+      Bech32.encode(hrp, [ver] + convert_bits(prog, 8, 5), spec)
     end
 
     private
 
     def parse_addr(addr)
-      @hrp, data = Bech32.decode(addr)
+      @hrp, data, spec = Bech32.decode(addr)
       raise 'Invalid address.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET, HRP_REGTEST].include?(hrp)
       @ver = data[0]
       raise 'Invalid witness version' if @ver > 16
       @prog = convert_bits(data[1..-1], 5, 8, false)
       raise 'Invalid witness program' if @prog.nil? || @prog.length < 2 || @prog.length > 40
       raise 'Invalid witness program with version 0' if @ver == 0 && (@prog.length != 20 && @prog.length != 32)
+      raise 'Witness version and encoding spec do not match' if (@ver == 0 && spec != Bech32::Encoding::BECH32) || (@ver != 0 && spec != Bech32::Encoding::BECH32M)
     end
 
     def convert_bits(data, from, to, padding=true)

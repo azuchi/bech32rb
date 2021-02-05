@@ -1,10 +1,14 @@
 # Bech32 [![Build Status](https://travis-ci.org/azuchi/bech32rb.svg?branch=master)](https://travis-ci.org/azuchi/bech32rb) [![Gem Version](https://badge.fury.io/rb/bech32.svg)](https://badge.fury.io/rb/bech32) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
-The implementation of the Bech32 encoder and decoder for Ruby.
+The implementation of the Bech32/Bech32m encoder and decoder for Ruby.
 
 Bech32 is checksummed base32 format that is used in following Bitcoin address format.
 
 https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+
+Bech32m is checksummed base32m format that is used in following Bitcoin address format.
+
+https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki
 
 ## Installation
 
@@ -35,13 +39,15 @@ require 'bech32'
 Decode Bech32-encoded data into hrp part and data part.
 
 ```ruby
-hrp, data = Bech32.decode('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4')
+hrp, data, spec = Bech32.decode('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4')
 
 # hrp is human-readable part of Bech32 format
 'bc'
 
 # data is data part of Bech32 format
 [0, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22]
+
+# spec is whether Bech32::Encoding::BECH32 or Bech32::Encoding::BECH32M
 ```
 
 Decode Bech32-encoded Segwit address into `Bech32::SegwitAddr` instance.
@@ -77,7 +83,7 @@ Encode Bech32 human-readable part and data part into Bech32 string.
 hrp = 'bc'
 data = [0, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22]
 
-bech = Bech32.encode(hrp, data)
+bech = Bech32.encode(hrp, data, Bech32::Encoding::BECH32)
 => bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4
 ```
 
