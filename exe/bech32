@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+require 'bech32'
+require 'thor'
+
+class CLI < Thor
+
+  desc 'encode hrp data bech32/bech32m', 'Encoding data to bech32/bech32m string.'
+  def encode(hrp, data, type)
+    if type && !['bech32', 'bech32m'].include?(type)
+      puts 'Invalid type value. type must be bech32 or bech32m.'
+    else
+      spec = type.nil? || type == 'bech32' ? 1 : 2
+      data = [data].pack('H*').unpack('C*')
+      puts Bech32.encode(hrp, data, spec)
+    end
+  end
+
+  desc 'decode "bech32string"', 'Decoding bech32/bech32m string.'
+  def decode(bech32_str)
+    bech32 = Bech32.decode(bech32_str, bech32_str.length)
+    puts <<~EOS
+      HRP: #{bech32[0]}
+      DATA: #{bech32[1].pack('C*').unpack1('H*')}
+      TYPE: #{bech32[2] == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
+    EOS
+  end
+
+end
+
+CLI.start(ARGV)
