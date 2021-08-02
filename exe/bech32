@@ -19,11 +19,15 @@ class CLI < Thor
   desc 'decode "bech32string"', 'Decoding bech32/bech32m string.'
   def decode(bech32_str)
     bech32 = Bech32.decode(bech32_str, bech32_str.length)
-    puts <<~EOS
-      HRP: #{bech32[0]}
-      DATA: #{bech32[1].pack('C*').unpack1('H*')}
-      TYPE: #{bech32[2] == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
-    EOS
+    if bech32
+      puts <<~EOS
+        HRP: #{bech32[0]}
+        DATA: #{bech32[1].pack('C*').unpack1('H*')}
+        TYPE: #{bech32[2] == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
+      EOS
+    else
+      puts 'Can not decode.'
+    end
   end
 
 end
