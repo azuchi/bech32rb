@@ -18,7 +18,7 @@ module Bech32
     # Returns segwit script pubkey which generated from witness version and witness program.
     def to_script_pubkey
       v = ver == 0 ? ver : ver + 0x50
-      ([v, prog.length].pack("CC") + prog.map{|p|[p].pack("C")}.join).unpack('H*').first
+      ([v, prog.length] + prog).pack('C*').unpack("H*").first
     end
 
     # parse script pubkey into witness version and witness program
