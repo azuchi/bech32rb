@@ -86,6 +86,35 @@ module Bech32
     hrp.each_char.map{|c|c.ord >> 5} + [0] + hrp.each_char.map{|c|c.ord & 31}
   end
 
+  # Convert a +data+ where each byte is encoding +from+ bits to a byte slice where each byte is encoding +to+ bits.
+  # @param [Array] data
+  # @param [Integer] from
+  # @param [Integer] to
+  # @param [Boolean] padding
+  # @return [Array]
+  def convert_bits(data, from, to, padding=true)
+    acc = 0
+    bits = 0
+    ret = []
+    maxv = (1 << to) - 1
+    max_acc = (1 << (from + to - 1)) - 1
+    data.each do |v|
+      return nil if v < 0 || (v >> from) != 0
+      acc = ((acc << from) | v) & max_acc
+      bits += from
+      while bits >= to
+        bits -= to
+        ret << ((acc >> bits) & maxv)
+      end
+    end
+    if padding
+      ret << ((acc << (to - bits)) & maxv) unless bits == 0
+    elsif bits >= from || ((acc << (to - bits)) & maxv) != 0
+      return nil
+    end
+    ret
+  end
+
   # Compute Bech32 checksum
   def polymod(values)
     generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
