@@ -6,6 +6,7 @@ module Bech32
   end
 
   autoload :SegwitAddr, 'bech32/segwit_addr'
+  autoload :Nostr, 'bech32/nostr'
 
   SEPARATOR = '1'
 
