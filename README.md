@@ -162,7 +162,7 @@ If bech32 string has segwit hrp, it will also output witness version and witness
 
     $ bech32 decode bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y
     HRP: bc
-    DATA: [1, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22, 14, 20, 15, 7, 13, 26, 0, 25, 18, 6, 11, 13, 8, 21, 4, 20, 3, 17, 2, 29, 3, 12, 29, 3, 4, 15, 24, 20, 6, 14, 30, 22]
+    DATA: 010e140f070d1a001912060b0d081504140311021d030c1d03040f1814060e1e160e140f070d1a001912060b0d081504140311021d030c1d03040f1814060e1e16
     TYPE: bech32m
     WITNESS VERSION: 1
     WITNESS PROGRAM: 751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6
@@ -171,7 +171,7 @@ If bech32 string has NIP-19 hrp, it will also output NIP-19 entry:
 
     $ bech32 decode nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p
     HRP: nprofile
-    DATA: [0, 0, 16, 3, 23, 28, 6, 6, 7, 31, 5, 25, 6, 17, 17, 20, 0, 30, 23, 25, 15, 9, 15, 5, 29, 25, 18, 15, 21, 2, 1, 29, 2, 1, 31, 15, 19, 25, 10, 24, 8, 28, 22, 4, 29, 14, 13, 10, 21, 27, 29, 4, 11, 7, 8, 1, 1, 21, 27, 23, 6, 28, 25, 26, 5, 28, 23, 23, 4, 11, 19, 24, 5, 25, 17, 22, 30, 27, 8, 1, 2, 21, 27, 23, 6, 28, 25, 26, 5, 28, 23, 22, 8, 26, 19, 2, 12, 5, 25, 18, 28, 28, 27, 1, 12, 17, 21, 22, 4, 11, 19, 3, 13, 29, 22, 16]
+    DATA: 00001003171c0606071f051906111114001e17190f090f051d19120f1502011d02011f0f13190a18081c16041d0e0d0a151b1d040b07080101151b17061c191a051c1717040b1318051911161e1b080102151b17061c191a051c1716081a13020c0519121c1c1b010c111516040b13030d1d1610
     TYPE: bech32
     NIP19 Entities:
       special: 3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d
