@@ -22,7 +22,7 @@ class CLI < Thor
     if hrp
       puts <<~EOS
         HRP: #{hrp}
-        DATA: #{data}
+        DATA: #{data.pack('C*').unpack1('H*')}
         TYPE: #{spec == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
       EOS
       if [Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST].include?(hrp)
