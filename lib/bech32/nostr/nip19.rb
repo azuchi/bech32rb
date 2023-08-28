@@ -1,3 +1,5 @@
+require "stringio"
+
 module Bech32
   module Nostr
     module NIP19
@@ -18,7 +20,8 @@ module Bech32
 
       # Decode nip19 string.
       # @param [String] string Bech32 string.
-      # @return [BareEntity | TLVEntity]
+      # @return [BareEntity]
+      # @return [TLVEntity]
       def decode(string)
         hrp, data, spec = Bech32.decode(string, string.length)
 

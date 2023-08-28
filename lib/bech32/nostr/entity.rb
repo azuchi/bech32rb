@@ -47,6 +47,22 @@ module Bech32
         [type, len].pack('CC') + data
       end
 
+      def to_s
+        type_label = case type
+                     when TLVEntity::TYPE_SPECIAL
+                       'special'
+                     when TLVEntity::TYPE_RELAY
+                       'relay'
+                     when TLVEntity::TYPE_AUTHOR
+                       'author'
+                     when TLVEntity::TYPE_KIND
+                       'kind'
+                     else
+                       'unknown'
+                     end
+        "#{type_label}: #{value}"
+      end
+
       private
 
       # Check whether +str+ is hex string or not.
@@ -91,7 +107,7 @@ module Bech32
       # @param [String] data Entity data(binary format).
       # @return [TLVEntity]
       def self.parse(hrp, data)
-        buf = StringIO.new(data)
+        buf = ::StringIO.new(data)
         entries = []
         until buf.eof?
           type, len = buf.read(2).unpack('CC')

@@ -18,13 +18,32 @@ class CLI < Thor
 
   desc 'decode "bech32string"', 'Decoding bech32/bech32m string.'
   def decode(bech32_str)
-    bech32 = Bech32.decode(bech32_str, bech32_str.length)
-    if bech32
+    hrp, data, spec = Bech32.decode(bech32_str, bech32_str.length)
+    if hrp
       puts <<~EOS
-        HRP: #{bech32[0]}
-        DATA: #{bech32[1].pack('C*').unpack1('H*')}
-        TYPE: #{bech32[2] == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
+        HRP: #{hrp}
+        DATA: #{data}
+        TYPE: #{spec == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
       EOS
+      if [Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST].include?(hrp)
+        addr = Bech32::SegwitAddr.new(bech32_str)
+        puts <<~EOS
+          WITNESS VERSION: #{addr.ver}
+          WITNESS PROGRAM: #{addr.prog.pack('C*').unpack1('H*')}
+        EOS
+      elsif Bech32::Nostr::NIP19::ALL_PREFIXES.include?(hrp)
+        entity = Bech32::Nostr::NIP19.decode(bech32_str)
+        if entity.is_a?(Bech32::Nostr::BareEntity)
+          puts <<~EOS
+            NIP19 Entity: #{entity.data}
+          EOS
+        else
+          puts 'NIP19 Entities:'
+          entity.entries.each do |entry|
+            puts "  #{entry.to_s}"
+          end
+        end
+      end
     else
       puts 'Can not decode.'
     end
