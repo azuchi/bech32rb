@@ -7,6 +7,7 @@ module Bech32
 
   autoload :SegwitAddr, 'bech32/segwit_addr'
   autoload :Nostr, 'bech32/nostr'
+  autoload :SilentPaymentAddr, 'bech32/silent_payment_addr'
 
   SEPARATOR = '1'
 
