@@ -100,6 +100,34 @@ segwit_addr.addr
 => 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
 ```
 
+### Silent payment address
+
+Decode silent payment address.
+
+```ruby
+addr = Bech32::SilentPaymentAddr.parse('sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv')
+
+# sp version
+addr.version
+=> 0
+# scan public key
+addr.scan_key
+=> '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4'
+# spend public key
+addr.spend_key
+=> '025cc9856d6f8375350e123978daac200c260cb5b5ae83106cab90484dcd8fcf36'
+```
+
+Encode sp address.
+
+```ruby
+addr = Bech32::SilentPaymentAddr.new('sp', 0, '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4', '025cc9856d6f8375350e123978daac200c260cb5b5ae83106cab90484dcd8fcf36')
+
+# sp address
+addr.to_s
+=> 'sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv'
+```
+
 ### Nostr
 
 Supports encoding/decoding of Nostr's [NIP-19](https://github.com/nostr-protocol/nips/blob/master/19.md) entities.
@@ -177,6 +205,16 @@ If bech32 string has NIP-19 hrp, it will also output NIP-19 entry:
       special: 3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d
       relay: wss://r.x.com
       relay: wss://djbas.sadkb.com
+
+If sp address, it will also output scan/spend public key:
+
+    $ bech32 decode sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv
+    HRP: sp
+    DATA: 000008100b191e160517060f00090b081a001b0e1f16000b0e1c041a180418041d0c021b02120714181a000d0917120d010d120b0d0800121c190602161a1b1c030e141a101c0411190f030d0a1808000c0418060b0b0d0d0e100c0806190a1c100901061c1b031e0f0618
+    TYPE: bech32m
+    version: 0
+    scan public key: 0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4
+    spend public key: 025cc9856d6f8375350e123978daac200c260cb5b5ae83106cab90484dcd8fcf36
 
 Note: `DATA` is data without bit conversion. When used, the `DATA` must be converted from 5-bit to 8-bit and padded as necessary.
 
