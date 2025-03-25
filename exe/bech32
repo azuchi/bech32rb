@@ -25,13 +25,14 @@ class CLI < Thor
         DATA: #{data.pack('C*').unpack1('H*')}
         TYPE: #{spec == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
       EOS
-      if [Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST].include?(hrp)
+      case hrp
+      when Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST
         addr = Bech32::SegwitAddr.new(bech32_str)
         puts <<~EOS
           WITNESS VERSION: #{addr.ver}
           WITNESS PROGRAM: #{addr.prog.pack('C*').unpack1('H*')}
         EOS
-      elsif Bech32::Nostr::NIP19::ALL_PREFIXES.include?(hrp)
+      when *Bech32::Nostr::NIP19::ALL_PREFIXES
         entity = Bech32::Nostr::NIP19.decode(bech32_str)
         if entity.is_a?(Bech32::Nostr::BareEntity)
           puts <<~EOS
@@ -43,6 +44,13 @@ class CLI < Thor
             puts "  #{entry.to_s}"
           end
         end
+      when Bech32::SilentPaymentAddr::HRP_MAINNET, Bech32::SilentPaymentAddr::HRP_TESTNET
+        addr = Bech32::SilentPaymentAddr.parse(bech32_str)
+        puts <<~EOS
+          version: #{addr.version}
+          scan public key: #{addr.scan_key}
+          spend public key: #{addr.spend_key}
+        EOS
       end
     else
       puts 'Can not decode.'
