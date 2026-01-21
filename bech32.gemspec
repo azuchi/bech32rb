@@ -13,8 +13,10 @@ Gem::Specification.new do |spec|
   spec.description   = %q(The implementation of Bech32 encoder and decoder.)
   spec.homepage      = 'https://github.com/azuchi/bech32rb'
   spec.license       = 'MIT'
+  spec.metadata      = { 'rubygems_mfa_required' => 'true' }
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.files         += Dir['sig/**/*.rbs']
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
