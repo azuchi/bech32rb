@@ -1,0 +1,28 @@
+module Bech32
+  class SegwitAddr
+    HRP_MAINNET: String
+    HRP_TESTNET: String
+    HRP_REGTEST: String
+
+    attr_accessor hrp: String
+    attr_accessor ver: Integer?
+    attr_accessor prog: Array[Integer]?
+
+    # Initialize SegwitAddr. Optionally parse from address string.
+    def initialize: (?String? addr) -> void
+
+    # Generate script pubkey from witness version and program.
+    def to_script_pubkey: () -> String
+
+    # Parse script pubkey into witness version and program.
+    def script_pubkey=: (String script_pubkey) -> void
+
+    # Generate bech32/bech32m address string.
+    def addr: () -> String
+
+    private
+
+    # Parse address string into hrp, version and program.
+    def parse_addr: (String addr) -> void
+  end
+end

@@ -1,0 +1,21 @@
+module Bech32
+  # BIP-352 silent payment address.
+  class SilentPaymentAddr
+    HRP_MAINNET: String
+    HRP_TESTNET: String
+
+    attr_reader hrp: String
+    attr_reader version: Integer
+    attr_reader scan_key: String
+    attr_reader spend_key: String
+
+    # Initialize SilentPaymentAddr.
+    def initialize: (String hrp, Integer version, String scan_key, String spend_key) -> void
+
+    # Parse silent payment address string.
+    def self.parse: (String addr) -> SilentPaymentAddr
+
+    # Generate silent payment address string.
+    def to_s: () -> String
+  end
+end

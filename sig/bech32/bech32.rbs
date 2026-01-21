@@ -1,0 +1,45 @@
+module Bech32
+  VERSION: String
+
+  module Encoding
+    BECH32: Integer
+    BECH32M: Integer
+  end
+
+  SEPARATOR: String
+  CHARSET: Array[String]
+  BECH32M_CONST: Integer
+
+  # Encode hrp and data to bech32/bech32m string.
+  def self.encode: (String hrp, Array[Integer] data, Integer spec) -> String
+
+  # Decode bech32/bech32m string. Returns nil if invalid.
+  def self.decode: (String bech, ?Integer max_length) -> [String, Array[Integer], Integer]?
+
+  # Convert bits from one base to another.
+  def self.convert_bits: (Array[Integer] data, Integer from, Integer to, ?bool padding) -> Array[Integer]?
+
+  # Create checksum for hrp and data.
+  def self.create_checksum: (String hrp, Array[Integer] data, Integer spec) -> Array[Integer]
+
+  # Verify checksum. Returns encoding spec if valid, nil otherwise.
+  def self.verify_checksum: (String hrp, Array[Integer] data) -> Integer?
+
+  # module_function methods are also available as instance methods
+  def encode: (String hrp, Array[Integer] data, Integer spec) -> String
+  def decode: (String bech, ?Integer max_length) -> [String, Array[Integer], Integer]?
+  def convert_bits: (Array[Integer] data, Integer from, Integer to, ?bool padding) -> Array[Integer]?
+  def create_checksum: (String hrp, Array[Integer] data, Integer spec) -> Array[Integer]
+  def verify_checksum: (String hrp, Array[Integer] data) -> Integer?
+
+  private
+
+  # Expand HRP for checksum computation.
+  def self.expand_hrp: (String hrp) -> Array[Integer]
+
+  # Compute polymod checksum.
+  def self.polymod: (Array[Integer] values) -> Integer
+
+  def expand_hrp: (String hrp) -> Array[Integer]
+  def polymod: (Array[Integer] values) -> Integer
+end

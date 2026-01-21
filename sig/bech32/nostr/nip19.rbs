@@ -1,0 +1,23 @@
+module Bech32
+  module Nostr
+    module NIP19
+      HRP_PUBKEY: String
+      HRP_PRIVATE_KEY: String
+      HRP_NOTE_ID: String
+      HRP_PROFILE: String
+      HRP_EVENT: String
+      HRP_RELAY: String
+      HRP_EVENT_COORDINATE: String
+
+      BARE_PREFIXES: Array[String]
+      TLV_PREFIXES: Array[String]
+      ALL_PREFIXES: Array[String]
+
+      # Decode NIP-19 bech32 string.
+      def self.decode: (String string) -> (BareEntity | TLVEntity)
+
+      # module_function methods are also available as instance methods
+      def decode: (String string) -> (BareEntity | TLVEntity)
+    end
+  end
+end
