@@ -28,7 +28,9 @@ module Bech32
         raise ArgumentError, 'Invalid nip19 string.' if hrp.nil?
         raise ArgumentError, 'Invalid bech32 spec.' unless spec == Bech32::Encoding::BECH32
 
-        entity = Bech32.convert_bits(data, 5, 8, false).pack('C*')
+        converted = Bech32.convert_bits(data, 5, 8, false)
+        raise ArgumentError, 'Invalid data.' if converted.nil?
+        entity = converted.pack('C*')
         raise ArgumentError, "Data whose HRP is #{hrp} must be 32 bytes." if BARE_PREFIXES.include?(hrp) && entity.bytesize != 32
         if BARE_PREFIXES.include?(hrp)
           BareEntity.new(hrp, entity.unpack1('H*'))

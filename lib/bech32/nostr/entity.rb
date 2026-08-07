@@ -110,37 +110,42 @@ module Bech32
         buf = ::StringIO.new(data)
         entries = []
         until buf.eof?
-          type, len = buf.read(2).unpack('CC')
+          header = buf.read(2)
+          raise ArgumentError, "Invalid TLV: truncated header." if header.nil? || header.bytesize < 2
+          type, len = header.unpack('CC')
+          value = buf.read(len)
+          raise ArgumentError, "Invalid TLV: truncated value." if value.nil? ? len > 0 : value.bytesize < len
+          value ||= ''
           case type
           when TYPE_SPECIAL # special
             case hrp
             when NIP19::HRP_PROFILE
-              entries << TLVEntry.new(type, buf.read(len).unpack1('H*'), 'pubkey')
+              entries << TLVEntry.new(type, value.unpack1('H*'), 'pubkey')
             when NIP19::HRP_RELAY
-              entries << TLVEntry.new(type, buf.read(len), 'relay')
+              entries << TLVEntry.new(type, value, 'relay')
             when NIP19::HRP_EVENT
-              entries << TLVEntry.new(type, buf.read(len).unpack1('H*'), 'id')
+              entries << TLVEntry.new(type, value.unpack1('H*'), 'id')
             when NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, buf.read(len), 'identifier')
+              entries << TLVEntry.new(type, value, 'identifier')
             end
           when TYPE_RELAY # relay
             case hrp
             when NIP19::HRP_PROFILE, NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, buf.read(len), 'relay')
+              entries << TLVEntry.new(type, value, 'relay')
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
           when TYPE_AUTHOR # author
             case hrp
             when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, buf.read(len).unpack1('H*'), 'author')
+              entries << TLVEntry.new(type, value.unpack1('H*'), 'author')
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
           when TYPE_KIND # kind
             case hrp
             when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, buf.read(len).unpack1('H*').to_i(16), 'kind')
+              entries << TLVEntry.new(type, value.unpack1('H*').to_i(16), 'kind')
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end

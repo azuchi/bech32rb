@@ -38,7 +38,9 @@ module Bech32
       raise ArgumentError, "addr must be encoded with bech32m." unless spec == Bech32::Encoding::BECH32M
       raise ArgumentError, 'Invalid hrp.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET].include?(hrp)
       version = data[0]
-      keys = Bech32.convert_bits(data[1..-1], 5, 8, false).pack('C*').unpack1('H*')
+      converted = Bech32.convert_bits(data[1..-1], 5, 8, false)
+      raise ArgumentError, "Invalid data." if converted.nil?
+      keys = converted.pack('C*').unpack1('H*')
       raise ArgumentError, "Invalid key size." unless keys.length == 132
       scan = keys[0...66]
       spend = keys[66..-1]
