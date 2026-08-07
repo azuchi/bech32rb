@@ -145,7 +145,7 @@ module Bech32
           when TYPE_KIND # kind
             case hrp
             when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value.unpack1('H*').to_i(16), 'kind')
+              entries << TLVEntry.new(type, value.unpack1('H*').to_s.to_i(16), 'kind')
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
