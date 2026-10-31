@@ -3,6 +3,7 @@ module Bech32
   class SilentPaymentAddr
     HRP_MAINNET: String
     HRP_TESTNET: String
+    MAX_VERSION: Integer
 
     attr_reader hrp: String
     attr_reader version: Integer

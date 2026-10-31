@@ -9,6 +9,7 @@ module Bech32
   SEPARATOR: String
   CHARSET: Array[String]
   BECH32M_CONST: Integer
+  HRP_MAX_LENGTH: Integer
 
   # Encode hrp and data to bech32/bech32m string.
   def self.encode: (String hrp, Array[Integer] data, Integer spec) -> String
@@ -40,6 +41,10 @@ module Bech32
   # Compute polymod checksum.
   def self.polymod: (Array[Integer] values) -> Integer
 
+  # Validate arguments of encode.
+  def self.validate_encode_args: (String hrp, Array[Integer] data) -> void
+
   def expand_hrp: (String hrp) -> Array[Integer]
   def polymod: (Array[Integer] values) -> Integer
+  def validate_encode_args: (String hrp, Array[Integer] data) -> void
 end

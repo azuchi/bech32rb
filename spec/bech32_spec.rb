@@ -165,6 +165,36 @@ describe Bech32 do
       'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmm7s34n6'
   ]
 
+  it 'encode with invalid arguments' do
+    valid_data = [0, 14, 20, 15, 7]
+    # hrp
+    expect{Bech32.encode('', valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must be between 1 and 83 characters.')
+    expect{Bech32.encode('a' * 84, valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must be between 1 and 83 characters.')
+    expect(Bech32.decode(Bech32.encode('a' * 83, valid_data, Bech32::Encoding::BECH32), 100)).not_to be_nil
+    expect{Bech32.encode('BC', valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must consist of lowercase characters in the range 33-126.')
+    expect{Bech32.encode("b c", valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must consist of lowercase characters in the range 33-126.')
+    expect{Bech32.encode("bc\x7f", valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must consist of lowercase characters in the range 33-126.')
+    expect{Bech32.encode(nil, valid_data, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'hrp must be String.')
+    # data
+    expect{Bech32.encode('bc', [32], Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'data values must be Integer between 0 and 31.')
+    expect{Bech32.encode('bc', [-1], Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'data values must be Integer between 0 and 31.')
+    expect{Bech32.encode('bc', ['q'], Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'data values must be Integer between 0 and 31.')
+    expect{Bech32.encode('bc', nil, Bech32::Encoding::BECH32)}.
+      to raise_error(ArgumentError, 'data must be Array.')
+    # boundary values and empty data are valid
+    expect(Bech32.decode(Bech32.encode('bc', [0, 31], Bech32::Encoding::BECH32M))).to eq(['bc', [0, 31], Bech32::Encoding::BECH32M])
+    expect(Bech32.encode('bc', [], Bech32::Encoding::BECH32)).to eq('bc1gmk9yu')
+  end
+
   it 'advanced length option checked' do
     # over character decode
     expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[0])).to be_nil

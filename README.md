@@ -135,7 +135,7 @@ Supports encoding/decoding of Nostr's [NIP-19](https://github.com/nostr-protocol
 ```ruby
 # Decode bare entity
 bech32 = 'npub10elfcs4fr0l0r8af98jlmgdh9c8tcxjvz9qkw038js35mp4dma8qzvjptg'
-entity = Bech32::Nostr::NIP19.parse(bech32)
+entity = Bech32::Nostr::NIP19.decode(bech32)
 entity.hrp
 => 'npub'
 entity.data
@@ -143,7 +143,7 @@ entity.data
 
 # Decode tlv entity
 bech32 = 'nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p'
-entity = Bech32::Nostr::NIP19.parse(bech32)
+entity = Bech32::Nostr::NIP19.decode(bech32)
 entity.hrp
 => 'nprofile'
 entity.entries[0].value

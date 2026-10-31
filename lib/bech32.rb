@@ -15,6 +15,9 @@ module Bech32
 
   BECH32M_CONST = 0x2bc830a3
 
+  # Maximum length of the human-readable part.
+  HRP_MAX_LENGTH = 83
+
   module_function
 
   # Returns the encoded Bech32 string.
@@ -26,7 +29,12 @@ module Bech32
   #   <i>Generates:</i>
   #   'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4' # bech
   #
+  # @param [String] hrp human-readable part (1 to 83 lowercase characters in the range 33-126).
+  # @param [Array<Integer>] data data values (each 0 to 31).
+  # @param [Integer] spec encoding spec, see Bech32::Encoding.
+  # @raise [ArgumentError] if hrp or data is invalid.
   def encode(hrp, data, spec)
+    validate_encode_args(hrp, data)
     checksummed = data + create_checksum(hrp, data, spec)
     hrp + SEPARATOR + checksummed.map{|i|CHARSET[i]}.join
   end
@@ -117,6 +125,24 @@ module Bech32
     ret
   end
 
+  # Validate arguments of encode.
+  # @param [String] hrp human-readable part.
+  # @param [Array<Integer>] data data values.
+  # @raise [ArgumentError]
+  def validate_encode_args(hrp, data)
+    raise ArgumentError, 'hrp must be String.' unless hrp.is_a?(String)
+    unless hrp.length.between?(1, HRP_MAX_LENGTH)
+      raise ArgumentError, "hrp must be between 1 and #{HRP_MAX_LENGTH} characters."
+    end
+    if hrp.bytes.any? { |b| b < 33 || b > 126 } || hrp != hrp.downcase
+      raise ArgumentError, 'hrp must consist of lowercase characters in the range 33-126.'
+    end
+    raise ArgumentError, 'data must be Array.' unless data.is_a?(Array)
+    unless data.all? { |v| v.is_a?(Integer) && v.between?(0, 31) }
+      raise ArgumentError, 'data values must be Integer between 0 and 31.'
+    end
+  end
+
   # Compute Bech32 checksum
   def polymod(values)
     generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
@@ -129,6 +155,6 @@ module Bech32
     chk
   end
 
-  private_class_method :polymod, :expand_hrp
+  private_class_method :polymod, :expand_hrp, :validate_encode_args
 
 end

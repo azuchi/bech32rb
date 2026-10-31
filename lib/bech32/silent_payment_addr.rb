@@ -5,6 +5,9 @@ module Bech32
     HRP_MAINNET = 'sp'
     HRP_TESTNET = 'tsp'
 
+    # Maximum valid version. Version 31 is reserved as invalid by BIP-352.
+    MAX_VERSION = 30
+
     attr_reader :hrp
     attr_reader :version
     attr_reader :scan_key
@@ -18,6 +21,7 @@ module Bech32
     def initialize(hrp, version, scan_key, spend_key)
       raise ArgumentError, "hrp must be sp or tsp." unless [HRP_MAINNET, HRP_TESTNET].include?(hrp)
       raise ArgumentError, "version must be Integer." unless version.is_a?(Integer)
+      raise ArgumentError, "version must be between 0 and #{MAX_VERSION}." unless version.between?(0, MAX_VERSION)
       raise ArgumentError, "scan_key must be String." unless scan_key.is_a?(String)
       raise ArgumentError, "spend_key must be String." unless spend_key.is_a?(String)
       raise ArgumentError, 'scan_key must be 33 bytes.' unless [scan_key].pack('H*').bytesize == 33
