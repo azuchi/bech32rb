@@ -158,6 +158,29 @@ describe Bech32 do
     segwit_addr = Bech32::SegwitAddr.new
     segwit_addr.script_pubkey = '0014751e76e8199196d454941c45d1b3a323f1433bd6'
     expect(segwit_addr.addr).to eq('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4'.downcase)
+    # version 16, 40 bytes program
+    segwit_addr.script_pubkey = '6028751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6'
+    expect(segwit_addr.ver).to eq(16)
+    expect(segwit_addr.prog.length).to eq(40)
+  end
+
+  it 'reject non-segwit script_pubkey' do
+    [
+      '76a914751e76e8199196d454941c45d1b3a323f1433bd688ac', # P2PKH
+      'a914751e76e8199196d454941c45d1b3a323f1433bd687',     # P2SH
+      '6114751e76e8199196d454941c45d1b3a323f1433bd6',       # OP_17 (0x61) is not a witness version
+      '0015751e76e8199196d454941c45d1b3a323f1433bd6',       # push length does not match program length
+      '0014751e76e8199196d454941c45d1b3a323f1433b',         # truncated program
+      '0014',                                               # no program
+      '',
+    ].each do |script|
+      expect{Bech32::SegwitAddr.new.script_pubkey = script}.to raise_error(ArgumentError, 'Invalid segwit script pubkey.')
+    end
+    expect{Bech32::SegwitAddr.new.script_pubkey = '5101ab'}.to raise_error(ArgumentError, 'Invalid witness program')
+    expect{Bech32::SegwitAddr.new.script_pubkey = '0029' + 'ab' * 41}.to raise_error(ArgumentError, 'Invalid witness program')
+    expect{Bech32::SegwitAddr.new.script_pubkey = '0010' + 'ab' * 16}.
+      to raise_error(ArgumentError, 'Invalid witness program with version 0')
+    expect{Bech32::SegwitAddr.new.script_pubkey = nil}.to raise_error(ArgumentError, 'script_pubkey must be String.')
   end
 
   OVER_MAXIMUM_CHARACTER = [

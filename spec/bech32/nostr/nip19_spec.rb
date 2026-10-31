@@ -108,6 +108,42 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'string values' do
+      let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
+
+      it 'returns relay and identifier as UTF-8 strings' do
+        bech32 = 'naddr1qqrxyctwv9hxzq3q80cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsxpqqqp65wqfwwaehxw309aex2mrp0yhxummnw3ezuetcv9khqmr99ekhjer0d4skjm3wv4uxzmtsd3jjucm0d5q3vamnwvaz7tmwdaehgu3wvfskuctwvyhxxmmd0zfmwx'
+        entity = described_class.decode(bech32)
+        expect(entity.entries[0].value.encoding).to eq(Encoding::UTF_8)
+        expect(entity.entries[3].value.encoding).to eq(Encoding::UTF_8)
+
+        bech32 = 'nrelay1qqvhwumn8ghj7un9d3shjtnwdaehgu3wv4uxzmtsd3jsh6r089'
+        expect(described_class.decode(bech32).entries[0].value.encoding).to eq(Encoding::UTF_8)
+      end
+
+      it 'round-trips a non-ASCII identifier' do
+        identifier = 'バナナ'
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, identifier),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, author),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, 30023)
+        ]
+        bech32 = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT_COORDINATE, entries).encode
+        entity = described_class.decode(bech32)
+        expect(entity.entries[0].value).to eq(identifier)
+        expect(entity.entries[0].value.encoding).to eq(Encoding::UTF_8)
+        expect(entity.encode).to eq(bech32)
+      end
+    end
+
+    context 'special entry with unsupported hrp' do
+      it do
+        data = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 1].pack('CC') + 'x'
+        expect { Bech32::Nostr::TLVEntity.parse('npub', data) }.
+          to raise_error(ArgumentError, 'Type: 0 does not supported for HRP: npub')
+      end
+    end
+
     context 'tlv value encoding' do
       let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
 

@@ -22,10 +22,26 @@ module Bech32
     end
 
     # parse script pubkey into witness version and witness program
+    # @param [String] script_pubkey segwit script pubkey with hex format.
+    # @raise [ArgumentError] if the script is not a valid segwit script pubkey.
     def script_pubkey=(script_pubkey)
-      values = [script_pubkey].pack('H*').unpack("C*")
-      @ver = values[0] == 0 ? values[0] : values[0] - 0x50
-      @prog = values[2..-1]
+      raise ArgumentError, 'script_pubkey must be String.' unless script_pubkey.is_a?(String)
+      values = [script_pubkey].pack('H*').unpack('C*')
+      raise ArgumentError, 'Invalid segwit script pubkey.' if values.length < 2
+      op, push_len = values[0], values[1]
+      prog = values[2..-1]
+      ver = if op == 0
+              0
+            elsif op.between?(0x51, 0x60) # OP_1..OP_16
+              op - 0x50
+            else
+              raise ArgumentError, 'Invalid segwit script pubkey.'
+            end
+      raise ArgumentError, 'Invalid segwit script pubkey.' unless push_len == prog.length
+      raise ArgumentError, 'Invalid witness program' if prog.length < 2 || prog.length > 40
+      raise ArgumentError, 'Invalid witness program with version 0' if ver == 0 && prog.length != 20 && prog.length != 32
+      @ver = ver
+      @prog = prog
     end
 
     # Returns segwit address string which generated from hrp, witness version and witness program.

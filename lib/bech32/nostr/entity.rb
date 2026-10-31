@@ -55,7 +55,7 @@ module Bech32
                  raise ArgumentError, "Value of type #{type} must be a hex string." unless hex_string?(value)
                  [value].pack('H*')
                else
-                 value
+                 value.b
                end
         len = data.bytesize
         raise ArgumentError, "Value must be at most #{MAX_VALUE_LENGTH} bytes." if len > MAX_VALUE_LENGTH
@@ -153,16 +153,18 @@ module Bech32
             when NIP19::HRP_PROFILE
               entries << TLVEntry.new(type, value.unpack1('H*'), 'pubkey')
             when NIP19::HRP_RELAY
-              entries << TLVEntry.new(type, value, 'relay')
+              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
             when NIP19::HRP_EVENT
               entries << TLVEntry.new(type, value.unpack1('H*'), 'id')
             when NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value, 'identifier')
+              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'identifier')
+            else
+              raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
           when TYPE_RELAY # relay
             case hrp
             when NIP19::HRP_PROFILE, NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value, 'relay')
+              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
