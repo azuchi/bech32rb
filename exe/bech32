@@ -7,13 +7,16 @@ class CLI < Thor
 
   desc 'encode hrp data bech32/bech32m', 'Encoding data to bech32/bech32m string.'
   def encode(hrp, data, type)
-    if type && !['bech32', 'bech32m'].include?(type)
+    unless ['bech32', 'bech32m'].include?(type)
       puts 'Invalid type value. type must be bech32 or bech32m.'
-    else
-      spec = type.nil? || type == 'bech32' ? 1 : 2
-      data = [data].pack('H*').unpack('C*')
-      puts Bech32.encode(hrp, data, spec)
+      exit 1
     end
+    spec = type == 'bech32' ? Bech32::Encoding::BECH32 : Bech32::Encoding::BECH32M
+    data = [data].pack('H*').unpack('C*')
+    puts Bech32.encode(hrp, data, spec)
+  rescue ArgumentError => e
+    puts "Can not encode: #{e.message}"
+    exit 1
   end
 
   desc 'decode "bech32string"', 'Decoding bech32/bech32m string.'
@@ -54,7 +57,11 @@ class CLI < Thor
       end
     else
       puts 'Can not decode.'
+      exit 1
     end
+  rescue ArgumentError => e
+    puts "Can not decode: #{e.message}"
+    exit 1
   end
 
 end

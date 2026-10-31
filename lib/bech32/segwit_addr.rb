@@ -10,6 +10,8 @@ module Bech32
     attr_accessor :ver # witness version
     attr_accessor :prog # witness program
 
+    # @param [String] addr segwit address. If given, it is parsed into hrp, witness version and program.
+    # @raise [ArgumentError] if addr is not a valid segwit address.
     def initialize(addr = nil)
       @hrp = HRP_MAINNET
       parse_addr(addr) if addr
@@ -54,13 +56,13 @@ module Bech32
 
     def parse_addr(addr)
       @hrp, data, spec = Bech32.decode(addr)
-      raise 'Invalid address.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET, HRP_REGTEST].include?(hrp)
+      raise ArgumentError, 'Invalid address.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET, HRP_REGTEST].include?(hrp)
       @ver = data[0]
-      raise 'Invalid witness version' if @ver > 16
+      raise ArgumentError, 'Invalid witness version' if @ver > 16
       @prog = Bech32.convert_bits(data[1..-1], 5, 8, false)
-      raise 'Invalid witness program' if @prog.nil? || @prog.length < 2 || @prog.length > 40
-      raise 'Invalid witness program with version 0' if @ver == 0 && (@prog.length != 20 && @prog.length != 32)
-      raise 'Witness version and encoding spec do not match' if (@ver == 0 && spec != Bech32::Encoding::BECH32) || (@ver != 0 && spec != Bech32::Encoding::BECH32M)
+      raise ArgumentError, 'Invalid witness program' if @prog.nil? || @prog.length < 2 || @prog.length > 40
+      raise ArgumentError, 'Invalid witness program with version 0' if @ver == 0 && (@prog.length != 20 && @prog.length != 32)
+      raise ArgumentError, 'Witness version and encoding spec do not match' if (@ver == 0 && spec != Bech32::Encoding::BECH32) || (@ver != 0 && spec != Bech32::Encoding::BECH32M)
     end
 
   end

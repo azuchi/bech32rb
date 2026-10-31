@@ -1,3 +1,5 @@
+require 'stringio'
+
 module Bech32
   module Nostr
     class BareEntity

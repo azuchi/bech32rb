@@ -150,7 +150,7 @@ describe Bech32 do
 
   it 'invlid address' do
     INVALID_ADDRESS.each do |addr|
-      expect{Bech32::SegwitAddr.new(addr)}.to raise_error(RuntimeError)
+      expect{Bech32::SegwitAddr.new(addr)}.to raise_error(ArgumentError)
     end
   end
 
