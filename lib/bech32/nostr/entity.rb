@@ -64,7 +64,6 @@ module Bech32
         [type, len].pack('CC') + data
       end
 
-
       def to_s
         type_label = case type
                      when TLVEntity::TYPE_SPECIAL
@@ -98,7 +97,6 @@ module Bech32
       end
 
       # Check whether +str+ is hex string or not.
-
       # @param [String] str string.
       # @return [Boolean]
       def hex_string?(str)
@@ -182,7 +180,6 @@ module Bech32
             when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
               raise ArgumentError, 'Invalid TLV: kind must be 4 bytes.' unless value.bytesize == 4
               entries << TLVEntry.new(type, value.unpack1('N'), 'kind')
-
             else
               raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
             end
@@ -198,7 +195,6 @@ module Bech32
       # @return [String] bech32 string.
       def encode
         data = entries.map { |e| e.to_payload(hrp) }.join
-
         Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
       end
     end
