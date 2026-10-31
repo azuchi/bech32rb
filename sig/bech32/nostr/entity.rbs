@@ -12,6 +12,8 @@ module Bech32
     end
 
     class TLVEntry
+      MAX_VALUE_LENGTH: Integer
+
       attr_reader type: Integer
       attr_reader label: String?
       attr_reader value: String | Integer
@@ -20,12 +22,15 @@ module Bech32
       def initialize: (Integer type, String | Integer value, ?String? label) -> void
 
       # Convert to binary payload.
-      def to_payload: () -> String
+      def to_payload: (?String? hrp) -> String
 
       # String representation.
       def to_s: () -> String
 
       private
+
+      # Check if the value of this entry is hex encoded.
+      def hex_value?: (String? hrp) -> bool
 
       # Check if string is hex encoded.
       def hex_string?: (String str) -> bool

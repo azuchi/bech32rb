@@ -107,5 +107,80 @@ RSpec.describe Bech32::Nostr::NIP19 do
           to raise_error(ArgumentError, 'Invalid bech32 spec.')
       end
     end
+
+    context 'tlv value encoding' do
+      let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
+
+      it 'round-trips a hex-like naddr identifier as a raw string' do
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'beef'),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, author),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, 30023)
+        ]
+        bech32 = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT_COORDINATE, entries).encode
+        entity = described_class.decode(bech32)
+        expect(entity.entries[0].value).to eq('beef')
+        expect(entity.entries[1].value).to eq(author)
+        expect(entity.entries[2].value).to eq(30023)
+        expect(entity.encode).to eq(bech32)
+      end
+
+      it 'round-trips a hex-like nrelay value as a raw string' do
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, '1234')]
+        bech32 = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_RELAY, entries).encode
+        entity = described_class.decode(bech32)
+        expect(entity.entries[0].value).to eq('1234')
+        expect(entity.encode).to eq(bech32)
+      end
+
+      it 'rejects a non-hex value for a hex-typed entry' do
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'not hex')]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, entries).encode }.
+          to raise_error(ArgumentError, 'Value of type 0 must be a hex string.')
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, 'not hex')]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, entries).encode }.
+          to raise_error(ArgumentError, 'Value of type 2 must be a hex string.')
+      end
+
+      it 'rejects a value longer than 255 bytes' do
+        relay = 'wss://' + 'r' * 250
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, author),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, relay)
+        ]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, entries).encode }.
+          to raise_error(ArgumentError, 'Value must be at most 255 bytes.')
+
+        # exactly 255 bytes is allowed
+        relay = 'wss://' + 'r' * 249
+        entries[1] = Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, relay)
+        bech32 = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, entries).encode
+        entity = described_class.decode(bech32)
+        expect(entity.entries[1].value).to eq(relay)
+        expect(entity.encode).to eq(bech32)
+      end
+
+      it 'rejects a kind out of 32-bit range' do
+        [-1, 2**32].each do |kind|
+          entries = [
+            Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, author),
+            Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, kind)
+          ]
+          expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, entries).encode }.
+            to raise_error(ArgumentError, 'Integer value must be between 0 and 4294967295.')
+        end
+      end
+
+      it 'rejects a kind whose length is not 4 bytes when parsing' do
+        [0, 1, 3, 5].each do |len|
+          data = [Bech32::Nostr::TLVEntity::TYPE_KIND, len].pack('CC') + ("\x00" * len).b
+          expect { Bech32::Nostr::TLVEntity.parse(Bech32::Nostr::NIP19::HRP_EVENT, data) }.
+            to raise_error(ArgumentError, 'Invalid TLV: kind must be 4 bytes.')
+        end
+        data = [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N')
+        entity = Bech32::Nostr::TLVEntity.parse(Bech32::Nostr::NIP19::HRP_EVENT, data)
+        expect(entity.entries[0].value).to eq(30023)
+      end
+    end
   end
 end
