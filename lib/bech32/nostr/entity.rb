@@ -116,6 +116,14 @@ module Bech32
 
       TYPES = [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND]
 
+      # TLV types each HRP supports.
+      SUPPORTED_TYPES = {
+        NIP19::HRP_PROFILE => [TYPE_SPECIAL, TYPE_RELAY],
+        NIP19::HRP_EVENT => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND],
+        NIP19::HRP_RELAY => [TYPE_SPECIAL],
+        NIP19::HRP_EVENT_COORDINATE => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND]
+      }
+
       attr_reader :hrp
       attr_reader :entries
 
@@ -147,6 +155,9 @@ module Bech32
           value = buf.read(len)
           raise ArgumentError, "Invalid TLV: truncated value." if value.nil? ? len > 0 : value.bytesize < len
           value ||= ''
+          # NIP-19: TLVs that are not recognized or supported should be ignored, rather than causing an error.
+          next if SUPPORTED_TYPES.key?(hrp) && !SUPPORTED_TYPES[hrp].include?(type)
+
           case type
           when TYPE_SPECIAL # special
             case hrp

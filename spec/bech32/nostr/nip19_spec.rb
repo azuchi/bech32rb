@@ -144,6 +144,29 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'unrecognized or unsupported tlv' do
+      let(:pubkey) { '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d' }
+
+      it 'ignores an unknown tlv type' do
+        # nprofile with a pubkey and an entry of type 9 ("abc")
+        entity = described_class.decode('nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gfqdskyccva3qfy')
+        expect(entity.entries.map(&:type)).to eq([Bech32::Nostr::TLVEntity::TYPE_SPECIAL])
+        expect(entity.entries[0].value).to eq(pubkey)
+      end
+
+      it 'ignores an empty unknown tlv' do
+        # nevent with an id and an empty entry of type 9
+        entity = described_class.decode('nevent1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gfqq0tksds')
+        expect(entity.entries.map(&:value)).to eq([pubkey])
+      end
+
+      it 'ignores a tlv type the hrp does not support' do
+        # nprofile with a pubkey and an author (type 2) entry
+        entity = described_class.decode('nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gzyqalp33lewf5vdq847t6te0wvnags0gs0mu72kz8938tn24wlfze69gy888')
+        expect(entity.entries.map(&:type)).to eq([Bech32::Nostr::TLVEntity::TYPE_SPECIAL])
+      end
+    end
+
     context 'tlv value encoding' do
       let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
 
