@@ -5,6 +5,11 @@ require 'thor'
 
 class CLI < Thor
 
+  # Exit with a non-zero status when Thor fails on arguments (e.g. missing or unknown command).
+  def self.exit_on_failure?
+    true
+  end
+
   desc 'encode hrp data bech32/bech32m', 'Encoding data to bech32/bech32m string.'
   def encode(hrp, data, type)
     unless ['bech32', 'bech32m'].include?(type)

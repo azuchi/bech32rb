@@ -39,6 +39,21 @@ RSpec.describe 'bech32 CLI' do
     end
   end
 
+  describe 'argument errors' do
+    it 'exits with a non-zero status on missing arguments' do
+      _, err, status = run_cli('encode', 'bc')
+      expect(status.success?).to be false
+      expect(err).to include('"bech32 encode" was called with arguments ["bc"]')
+      expect(err).not_to include('Deprecation warning')
+    end
+
+    it 'exits with a non-zero status on an unknown command' do
+      _, err, status = run_cli('unknown')
+      expect(status.success?).to be false
+      expect(err).to include('Could not find command "unknown"')
+    end
+  end
+
   describe 'decode' do
     it 'decodes a segwit address' do
       out, _, status = run_cli('decode', 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4')
