@@ -5,6 +5,7 @@ module Bech32
     HRP_TESTNET: String
     MAX_VERSION: Integer
     KEYS_LENGTH: Integer
+    KEYS_GROUPS: Integer
     MAX_LENGTH: Integer
 
     attr_reader hrp: String

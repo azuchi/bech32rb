@@ -74,6 +74,15 @@ RSpec.describe 'bech32 CLI' do
       expect(err).not_to match(/(ArgumentError|RuntimeError|:in ')/)
     end
 
+    it 'prints nothing but the error when the entity cannot be parsed' do
+      pubkey = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
+      payload = ([0, 32].pack('CC') + [pubkey].pack('H*')) + ([1, 200].pack('CC') + 'r' * 200) * 16
+      bech32 = Bech32.encode('nprofile', Bech32.convert_bits(payload.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
+      out, _, status = run_cli('decode', bech32)
+      expect(status.exitstatus).to eq(1)
+      expect(out.strip).to eq('Can not decode: nip19 string must be at most 5000 characters.')
+    end
+
     it 'fails on an invalid nip19 entity without a stack trace' do
       out, err, status = run_cli('decode', 'npub1qdl8a8zz4ydlauvl4y57tldpkuhqa0q6fsg5zee7y72zxnvx4h05uk8223u')
       expect(status.exitstatus).to eq(1)

@@ -292,10 +292,17 @@ RSpec.describe Bech32::Nostr::NIP19 do
 
     context 'bare entity data' do
       it 'rejects data that is not a hex string' do
-        ['z' * 64, '0' * 63 + 'g', nil].each do |data|
+        ['z' * 64, '0' * 63 + 'g', nil, ('00' * 32).encode('UTF-16LE'), "\xff" * 64].each do |data|
           expect { Bech32::Nostr::BareEntity.new('npub', data) }.
             to raise_error(ArgumentError, 'Data must be a hex string.')
         end
+      end
+    end
+
+    context 'tlv entry payload without hrp' do
+      it 'treats a special value that is not valid UTF-8 as a raw string' do
+        payload = Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, "\xff\xfe").to_payload
+        expect(payload).to eq("\x00\x02\xff\xfe".b)
       end
     end
 

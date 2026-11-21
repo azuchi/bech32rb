@@ -65,6 +65,24 @@ RSpec.describe Bech32::SilentPaymentAddr do
       end
     end
 
+    it 'discards extra data of a version 1-30 address that does not end on a byte boundary' do
+      groups = Bech32.convert_bits([scan_key + spend_key].pack('H*').unpack('C*'), 8, 5)
+      # 66 bytes take 106 groups with 2 padding bits. Set those bits and add 1 more group,
+      # so the extra data is 7 bits and does not form a whole byte.
+      groups[-1] |= 0b11
+      data = [1] + groups + [31]
+      addr = described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))
+      expect(addr.scan_key).to eq(scan_key)
+      expect(addr.spend_key).to eq(spend_key)
+    end
+
+    it 'rejects a version 0 address with non-zero padding bits' do
+      groups = Bech32.convert_bits([scan_key + spend_key].pack('H*').unpack('C*'), 8, 5)
+      groups[-1] |= 0b11
+      expect{described_class.parse(Bech32.encode('sp', [0] + groups, Bech32::Encoding::BECH32M))}.
+        to raise_error(ArgumentError, 'Invalid data.')
+    end
+
     it 'rejects a version 0 address with extra bytes' do
       data = [0] + Bech32.convert_bits(([scan_key + spend_key].pack('H*') + "\x01").unpack('C*'), 8, 5)
       expect{described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))}.

@@ -37,6 +37,9 @@ module Bech32
     # Byte length of the data part (scan key + spend key) for version 0.
     KEYS_LENGTH = 66
 
+    # Number of 5-bit groups that cover KEYS_LENGTH bytes.
+    KEYS_GROUPS = (KEYS_LENGTH * 8 + 4) / 5
+
     # Maximum length of an address string recommended by BIP-352.
     MAX_LENGTH = 1023
 
@@ -54,12 +57,17 @@ module Bech32
       raise ArgumentError, "addr must be encoded with bech32m." unless spec == Bech32::Encoding::BECH32M
       raise ArgumentError, 'Invalid hrp.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET].include?(hrp)
       version = data[0]
-      converted = Bech32.convert_bits(data[1..-1], 5, 8, false)
-      raise ArgumentError, "Invalid data." if converted.nil?
       if version.zero?
+        converted = Bech32.convert_bits(data[1..-1], 5, 8, false)
+        raise ArgumentError, "Invalid data." if converted.nil?
         raise ArgumentError, "Invalid key size." unless converted.length == KEYS_LENGTH
       else
-        raise ArgumentError, "Invalid key size." if converted.length < KEYS_LENGTH
+        # Convert only the 5-bit groups that cover the first 66 bytes, so that the discarded rest
+        # does not need to end on a byte boundary.
+        groups = data[1..-1]
+        raise ArgumentError, "Invalid key size." if groups.length < KEYS_GROUPS
+        converted = Bech32.convert_bits(groups[0...KEYS_GROUPS], 5, 8, true)
+        raise ArgumentError, "Invalid data." if converted.nil?
       end
       keys = converted[0...KEYS_LENGTH].pack('C*').unpack1('H*')
       scan = keys[0...66]

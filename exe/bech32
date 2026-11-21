@@ -28,43 +28,42 @@ class CLI < Thor
   desc 'decode "bech32string"', 'Decoding bech32/bech32m string.'
   def decode(bech32_str)
     hrp, data, spec = Bech32.decode(bech32_str, bech32_str.length)
-    if hrp
-      puts <<~EOS
-        HRP: #{hrp}
-        DATA: #{data.pack('C*').unpack1('H*')}
-        TYPE: #{spec == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
-      EOS
-      case hrp
-      when Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST
-        addr = Bech32::SegwitAddr.new(bech32_str)
-        puts <<~EOS
-          WITNESS VERSION: #{addr.ver}
-          WITNESS PROGRAM: #{addr.prog.pack('C*').unpack1('H*')}
-        EOS
-      when *Bech32::Nostr::NIP19::ALL_PREFIXES
-        entity = Bech32::Nostr::NIP19.decode(bech32_str)
-        if entity.is_a?(Bech32::Nostr::BareEntity)
-          puts <<~EOS
-            NIP19 Entity: #{entity.data}
-          EOS
-        else
-          puts 'NIP19 Entities:'
-          entity.entries.each do |entry|
-            puts "  #{entry.to_s}"
-          end
-        end
-      when Bech32::SilentPaymentAddr::HRP_MAINNET, Bech32::SilentPaymentAddr::HRP_TESTNET
-        addr = Bech32::SilentPaymentAddr.parse(bech32_str)
-        puts <<~EOS
-          version: #{addr.version}
-          scan public key: #{addr.scan_key}
-          spend public key: #{addr.spend_key}
-        EOS
-      end
-    else
+    unless hrp
       puts 'Can not decode.'
       exit 1
     end
+    # Build all the output first, so that nothing is printed if parsing the address or entity fails.
+    output = <<~EOS
+      HRP: #{hrp}
+      DATA: #{data.pack('C*').unpack1('H*')}
+      TYPE: #{spec == Bech32::Encoding::BECH32 ? 'bech32' : 'bech32m'}
+    EOS
+    case hrp
+    when Bech32::SegwitAddr::HRP_MAINNET, Bech32::SegwitAddr::HRP_TESTNET, Bech32::SegwitAddr::HRP_REGTEST
+      addr = Bech32::SegwitAddr.new(bech32_str)
+      output += <<~EOS
+        WITNESS VERSION: #{addr.ver}
+        WITNESS PROGRAM: #{addr.prog.pack('C*').unpack1('H*')}
+      EOS
+    when *Bech32::Nostr::NIP19::ALL_PREFIXES
+      entity = Bech32::Nostr::NIP19.decode(bech32_str)
+      if entity.is_a?(Bech32::Nostr::BareEntity)
+        output += "NIP19 Entity: #{entity.data}\n"
+      else
+        output += "NIP19 Entities:\n"
+        entity.entries.each do |entry|
+          output += "  #{entry.to_s}\n"
+        end
+      end
+    when Bech32::SilentPaymentAddr::HRP_MAINNET, Bech32::SilentPaymentAddr::HRP_TESTNET
+      addr = Bech32::SilentPaymentAddr.parse(bech32_str)
+      output += <<~EOS
+        version: #{addr.version}
+        scan public key: #{addr.scan_key}
+        spend public key: #{addr.spend_key}
+      EOS
+    end
+    puts output
   rescue ArgumentError => e
     puts "Can not decode: #{e.message}"
     exit 1

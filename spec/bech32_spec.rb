@@ -178,6 +178,10 @@ describe Bech32 do
     expect(Bech32.hex_string?("00\n")).to be false
     expect(Bech32.hex_string?('００')).to be false
     expect(Bech32.hex_string?(nil)).to be false
+    # never raises for invalid or non-ASCII-compatible encodings
+    expect(Bech32.hex_string?("\xff\xfe")).to be false
+    expect(Bech32.hex_string?('00'.encode('UTF-16LE'))).to be false
+    expect(Bech32.hex_string?('00'.b)).to be true
   end
 
   it 'reject non-segwit script_pubkey' do

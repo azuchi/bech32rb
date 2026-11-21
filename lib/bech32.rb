@@ -128,11 +128,14 @@ module Bech32
   end
 
   # Check whether +str+ is a hex string: an even number of hex characters (0-9, a-f, A-F).
-  # An empty string is a hex string of zero bytes.
+  # An empty string is a hex string of zero bytes. It never raises, whatever the encoding of +str+.
   # @param [Object] str the value to check.
   # @return [Boolean]
   def hex_string?(str)
-    str.is_a?(String) && str.length.even? && str.match?(/\A\h*\z/)
+    return false unless str.is_a?(String)
+    # Match on the raw bytes, so that invalid or non-ASCII-compatible encodings return false instead of raising.
+    bytes = str.b
+    bytes.bytesize.even? && bytes.match?(/\A\h*\z/n)
   end
 
   # Validate arguments of encode.
