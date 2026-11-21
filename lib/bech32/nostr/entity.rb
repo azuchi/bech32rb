@@ -132,6 +132,9 @@ module Bech32
         NIP19::HRP_EVENT_COORDINATE => [TYPE_SPECIAL, TYPE_AUTHOR, TYPE_KIND].freeze
       }.freeze
 
+      # Byte length of a public key or an event id (NIP-19).
+      KEY_LENGTH = 32
+
       attr_reader :hrp
       attr_reader :entries
 
@@ -167,6 +170,8 @@ module Bech32
           # NIP-19: TLVs that are not recognized or supported should be ignored, rather than causing an error.
           next unless supported.include?(type)
 
+          check_value_length(hrp, type, value.bytesize)
+
           entries << case type
                      when TYPE_SPECIAL
                        case hrp
@@ -185,20 +190,53 @@ module Bech32
                      end
         end
 
+        check_required_types(hrp, entries)
+        TLVEntity.new(hrp, entries)
+      end
+
+      # Encode tlv entity to bech32 string.
+      # The entity is checked against the same rules as {.parse}, so that the result can be decoded.
+      # @return [String] bech32 string.
+      # @raise [ArgumentError] if an entry type is unsupported for the HRP, a value has an invalid length,
+      # or a required entry is missing.
+      def encode
+        supported = SUPPORTED_TYPES[hrp]
+        entries.each do |e|
+          raise ArgumentError, "Type #{e.type} is unsupported for HRP: #{hrp}" unless supported.include?(e.type)
+        end
+        payloads = entries.map { |e| e.to_payload(hrp) }
+        entries.zip(payloads) { |e, payload| TLVEntity.check_value_length(hrp, e.type, payload.bytesize - 2) }
+        TLVEntity.check_required_types(hrp, entries)
+        data = payloads.join
+        Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
+      end
+
+      # Check the byte length of a TLV value.
+      # Public keys and event ids must be 32 bytes, and the relay of nrelay must not be empty.
+      # @param [String] hrp human-readable part.
+      # @param [Integer] type TLV type.
+      # @param [Integer] length byte length of the value.
+      # @raise [ArgumentError] if the length is invalid.
+      def self.check_value_length(hrp, type, length)
+        if type == TYPE_AUTHOR || (type == TYPE_SPECIAL && [NIP19::HRP_PROFILE, NIP19::HRP_EVENT].include?(hrp))
+          return if length == KEY_LENGTH
+
+          raise ArgumentError, "Invalid TLV: type #{type} for HRP: #{hrp} must be #{KEY_LENGTH} bytes."
+        elsif type == TYPE_SPECIAL && hrp == NIP19::HRP_RELAY && length.zero?
+          raise ArgumentError, "Invalid TLV: type #{type} for HRP: #{hrp} must not be empty."
+        end
+      end
+
+      # Check that all TLV types required for the HRP are present.
+      # @param [String] hrp human-readable part.
+      # @param [Array<TLVEntry>] entries TLV entries.
+      # @raise [ArgumentError] if a required type is missing.
+      def self.check_required_types(hrp, entries)
         REQUIRED_TYPES[hrp].each do |required|
           next if entries.any? { |e| e.type == required }
 
           raise ArgumentError, "Invalid TLV: missing required type #{required} for HRP: #{hrp}"
         end
-
-        TLVEntity.new(hrp, entries)
-      end
-
-      # Encode tlv entity to bech32 string.
-      # @return [String] bech32 string.
-      def encode
-        data = entries.map { |e| e.to_payload(hrp) }.join
-        Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
       end
     end
   end

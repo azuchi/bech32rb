@@ -9,6 +9,12 @@ module Bech32
 
       # Encode to bech32 string.
       def encode: () -> String
+
+      # Check the byte length of a TLV value.
+      def self.check_value_length: (String hrp, Integer type, Integer length) -> void
+
+      # Check that all required TLV types are present.
+      def self.check_required_types: (String hrp, Array[TLVEntry] entries) -> void
     end
 
     class TLVEntry
@@ -45,6 +51,7 @@ module Bech32
 
       SUPPORTED_TYPES: Hash[String, Array[Integer]]
       REQUIRED_TYPES: Hash[String, Array[Integer]]
+      KEY_LENGTH: Integer
 
       attr_reader hrp: String
       attr_reader entries: Array[TLVEntry]
@@ -57,6 +64,12 @@ module Bech32
 
       # Encode to bech32 string.
       def encode: () -> String
+
+      # Check the byte length of a TLV value.
+      def self.check_value_length: (String hrp, Integer type, Integer length) -> void
+
+      # Check that all required TLV types are present.
+      def self.check_required_types: (String hrp, Array[TLVEntry] entries) -> void
     end
   end
 end
