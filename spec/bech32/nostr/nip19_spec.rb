@@ -255,6 +255,15 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'bare entity data' do
+      it 'rejects data that is not a hex string' do
+        ['z' * 64, '0' * 63 + 'g', nil].each do |data|
+          expect { Bech32::Nostr::BareEntity.new('npub', data) }.
+            to raise_error(ArgumentError, 'Data must be a hex string.')
+        end
+      end
+    end
+
     context 'tlv entry value type' do
       it 'requires an Integer kind' do
         expect { Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, '1') }.

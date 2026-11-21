@@ -26,12 +26,16 @@ module Bech32
   # Verify checksum. Returns encoding spec if valid, nil otherwise.
   def self.verify_checksum: (String hrp, Array[Integer] data) -> Integer?
 
+  # Check whether the value is a hex string.
+  def self.hex_string?: (untyped str) -> bool
+
   # module_function methods are also available as instance methods
   def encode: (String hrp, Array[Integer] data, Integer spec) -> String
   def decode: (String bech, ?Integer max_length) -> [String, Array[Integer], Integer]?
   def convert_bits: (Array[Integer] data, Integer from, Integer to, ?bool padding) -> Array[Integer]?
   def create_checksum: (String hrp, Array[Integer] data, Integer spec) -> Array[Integer]
   def verify_checksum: (String hrp, Array[Integer] data) -> Integer?
+  def hex_string?: (untyped str) -> bool
 
   private
 

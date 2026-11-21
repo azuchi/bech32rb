@@ -28,6 +28,7 @@ module Bech32
     # @raise [ArgumentError] if the script is not a valid segwit script pubkey.
     def script_pubkey=(script_pubkey)
       raise ArgumentError, 'script_pubkey must be String.' unless script_pubkey.is_a?(String)
+      raise ArgumentError, 'script_pubkey must be a hex string.' unless Bech32.hex_string?(script_pubkey)
       values = [script_pubkey].pack('H*').unpack('C*')
       raise ArgumentError, 'Invalid segwit script pubkey.' if values.length < 2
       op, push_len = values[0], values[1]

@@ -22,6 +22,15 @@ RSpec.describe 'bech32 CLI' do
       expect(out.strip).to eq('Invalid type value. type must be bech32 or bech32m.')
     end
 
+    it 'fails on non-hex or odd-length data' do
+      %w[0g 000].each do |data|
+        out, err, status = run_cli('encode', 'bc', data, 'bech32')
+        expect(status.exitstatus).to eq(1)
+        expect(out.strip).to eq('Can not encode: data must be a hex string.')
+        expect(err).not_to match(/(ArgumentError|RuntimeError|:in ')/)
+      end
+    end
+
     it 'fails on invalid hrp without a stack trace' do
       out, err, status = run_cli('encode', 'BC', '00', 'bech32')
       expect(status.exitstatus).to eq(1)

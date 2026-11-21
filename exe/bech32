@@ -12,6 +12,7 @@ class CLI < Thor
       exit 1
     end
     spec = type == 'bech32' ? Bech32::Encoding::BECH32 : Bech32::Encoding::BECH32M
+    raise ArgumentError, 'data must be a hex string.' unless Bech32.hex_string?(data)
     data = [data].pack('H*').unpack('C*')
     puts Bech32.encode(hrp, data, spec)
   rescue ArgumentError => e

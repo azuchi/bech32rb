@@ -125,6 +125,14 @@ module Bech32
     ret
   end
 
+  # Check whether +str+ is a hex string: an even number of hex characters (0-9, a-f, A-F).
+  # An empty string is a hex string of zero bytes.
+  # @param [Object] str the value to check.
+  # @return [Boolean]
+  def hex_string?(str)
+    str.is_a?(String) && str.length.even? && str.match?(/\A\h*\z/)
+  end
+
   # Validate arguments of encode.
   # @param [String] hrp human-readable part.
   # @param [Array<Integer>] data data values.

@@ -11,6 +11,7 @@ module Bech32
       # @param [String] data Entity data(hex string).
       def initialize(hrp, data)
         raise ArgumentError, "HRP #{hrp} is unsupported." unless NIP19::BARE_PREFIXES.include?(hrp)
+        raise ArgumentError, "Data must be a hex string." unless Bech32.hex_string?(data)
         raise ArgumentError, "Data whose HRP is #{hrp} must be 32 bytes." unless [data].pack('H*').bytesize == 32
         @hrp = hrp
         @data = data
@@ -105,10 +106,7 @@ module Bech32
       # @param [String] str string.
       # @return [Boolean]
       def hex_string?(str)
-        return false if str.bytes.any? { |b| b > 127 }
-        return false if str.length % 2 != 0
-        hex_chars = str.chars.to_a
-        hex_chars.all? { |c| c =~ /[0-9a-fA-F]/ }
+        Bech32.hex_string?(str)
       end
     end
 

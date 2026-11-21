@@ -24,6 +24,8 @@ module Bech32
       raise ArgumentError, "version must be between 0 and #{MAX_VERSION}." unless version.between?(0, MAX_VERSION)
       raise ArgumentError, "scan_key must be String." unless scan_key.is_a?(String)
       raise ArgumentError, "spend_key must be String." unless spend_key.is_a?(String)
+      raise ArgumentError, 'scan_key must be a hex string.' unless Bech32.hex_string?(scan_key)
+      raise ArgumentError, 'spend_key must be a hex string.' unless Bech32.hex_string?(spend_key)
       raise ArgumentError, 'scan_key must be 33 bytes.' unless [scan_key].pack('H*').bytesize == 33
       raise ArgumentError, 'spend_key must be 33 bytes.' unless [spend_key].pack('H*').bytesize == 33
       @hrp = hrp

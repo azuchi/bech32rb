@@ -29,6 +29,12 @@ RSpec.describe Bech32::SilentPaymentAddr do
     expect{described_class.new(
       'sp', '0', '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4', '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4')}.
       to raise_error(ArgumentError, 'version must be Integer.')
+    expect{described_class.new(
+      'sp', 0, 'zz' * 33, '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4')}.
+      to raise_error(ArgumentError, 'scan_key must be a hex string.')
+    expect{described_class.new(
+      'sp', 0, '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4', '0' * 65)}.
+      to raise_error(ArgumentError, 'spend_key must be a hex string.')
   end
 
   describe 'version' do

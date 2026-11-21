@@ -164,6 +164,22 @@ describe Bech32 do
     expect(segwit_addr.prog.length).to eq(40)
   end
 
+  it 'reject non-hex script_pubkey' do
+    ['zz14751e76e8199196d454941c45d1b3a323f1433bd6', '0014751e76e8199196d454941c45d1b3a323f1433bd', '0014 751e'].each do |script|
+      expect{Bech32::SegwitAddr.new.script_pubkey = script}.to raise_error(ArgumentError, 'script_pubkey must be a hex string.')
+    end
+  end
+
+  it 'checks hex string' do
+    expect(Bech32.hex_string?('')).to be true
+    expect(Bech32.hex_string?('00aBcD')).to be true
+    expect(Bech32.hex_string?('0')).to be false
+    expect(Bech32.hex_string?('0g')).to be false
+    expect(Bech32.hex_string?("00\n")).to be false
+    expect(Bech32.hex_string?('００')).to be false
+    expect(Bech32.hex_string?(nil)).to be false
+  end
+
   it 'reject non-segwit script_pubkey' do
     [
       '76a914751e76e8199196d454941c45d1b3a323f1433bd688ac', # P2PKH
