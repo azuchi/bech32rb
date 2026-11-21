@@ -9,12 +9,6 @@ module Bech32
 
       # Encode to bech32 string.
       def encode: () -> String
-
-      # Check the byte length of a TLV value.
-      def self.check_value_length: (String hrp, Integer type, Integer length) -> void
-
-      # Check that all required TLV types are present.
-      def self.check_required_types: (String hrp, Array[TLVEntry] entries) -> void
     end
 
     class TLVEntry
@@ -70,6 +64,9 @@ module Bech32
 
       # Check that all required TLV types are present.
       def self.check_required_types: (String hrp, Array[TLVEntry] entries) -> void
+
+      # Check the character encoding of a relay or identifier value.
+      def self.check_value_encoding: (String hrp, Integer type, String value) -> void
     end
   end
 end

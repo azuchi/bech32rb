@@ -255,6 +255,59 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'tlv entry value type' do
+      it 'requires an Integer kind' do
+        expect { Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, '1') }.
+          to raise_error(ArgumentError, 'Value of kind must be Integer. String given.')
+      end
+
+      it 'requires a String value for other types' do
+        [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, Bech32::Nostr::TLVEntity::TYPE_RELAY,
+         Bech32::Nostr::TLVEntity::TYPE_AUTHOR].each do |type|
+          expect { Bech32::Nostr::TLVEntry.new(type, 1) }.
+            to raise_error(ArgumentError, "Value of type #{type} must be String. Integer given.")
+        end
+      end
+    end
+
+    context 'tlv string encoding' do
+      let(:pubkey) { '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d' }
+      let(:special) { [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 32].pack('CC') + ("\x01" * 32).b }
+      let(:author) { [Bech32::Nostr::TLVEntity::TYPE_AUTHOR, 32].pack('CC') + ("\x02" * 32).b }
+      let(:kind) { [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N') }
+
+      it 'rejects a non-ASCII relay when parsing' do
+        relay = [Bech32::Nostr::TLVEntity::TYPE_RELAY, 2].pack('CC') + "\xff\xfe".b
+        expect { Bech32::Nostr::TLVEntity.parse('nprofile', special + relay) }.
+          to raise_error(ArgumentError, 'Invalid TLV: relay must be ASCII.')
+        nrelay = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 3].pack('CC') + 'é'.b + 'x'
+        expect { Bech32::Nostr::TLVEntity.parse('nrelay', nrelay) }.
+          to raise_error(ArgumentError, 'Invalid TLV: relay must be ASCII.')
+      end
+
+      it 'rejects an identifier that is not valid UTF-8 when parsing' do
+        identifier = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 2].pack('CC') + "\xff\xfe".b
+        expect { Bech32::Nostr::TLVEntity.parse('naddr', identifier + author + kind) }.
+          to raise_error(ArgumentError, 'Invalid TLV: identifier must be valid UTF-8.')
+      end
+
+      it 'rejects a non-ASCII relay or an invalid identifier when encoding' do
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, pubkey),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, 'wss://リレー.example')
+        ]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: relay must be ASCII.')
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, "\xff".b),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, pubkey),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_KIND, 30023)
+        ]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT_COORDINATE, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: identifier must be valid UTF-8.')
+      end
+    end
+
     context 'tlv value encoding' do
       let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
 

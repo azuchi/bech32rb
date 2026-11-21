@@ -31,6 +31,11 @@ module Bech32
 
       def initialize(type, value, label = nil)
         raise ArgumentError, "Type #{type} unsupported." unless TLVEntity::TYPES.include?(type)
+        if type == TLVEntity::TYPE_KIND
+          raise ArgumentError, "Value of kind must be Integer. #{value.class} given." unless value.is_a?(Integer)
+        else
+          raise ArgumentError, "Value of type #{type} must be String. #{value.class} given." unless value.is_a?(String)
+        end
 
         @type = type
         @value = value
@@ -171,6 +176,7 @@ module Bech32
           next unless supported.include?(type)
 
           check_value_length(hrp, type, value.bytesize)
+          check_value_encoding(hrp, type, value)
 
           entries << case type
                      when TYPE_SPECIAL
@@ -197,15 +203,18 @@ module Bech32
       # Encode tlv entity to bech32 string.
       # The entity is checked against the same rules as {.parse}, so that the result can be decoded.
       # @return [String] bech32 string.
-      # @raise [ArgumentError] if an entry type is unsupported for the HRP, a value has an invalid length,
-      # or a required entry is missing.
+      # @raise [ArgumentError] if an entry type is unsupported for the HRP, a value has an invalid length
+      # or encoding, or a required entry is missing.
       def encode
         supported = SUPPORTED_TYPES[hrp]
         entries.each do |e|
           raise ArgumentError, "Type #{e.type} is unsupported for HRP: #{hrp}" unless supported.include?(e.type)
         end
         payloads = entries.map { |e| e.to_payload(hrp) }
-        entries.zip(payloads) { |e, payload| TLVEntity.check_value_length(hrp, e.type, payload.bytesize - 2) }
+        entries.zip(payloads) do |e, payload|
+          TLVEntity.check_value_length(hrp, e.type, payload.bytesize - 2)
+          TLVEntity.check_value_encoding(hrp, e.type, payload.byteslice(2..))
+        end
         TLVEntity.check_required_types(hrp, entries)
         data = payloads.join
         Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
@@ -224,6 +233,22 @@ module Bech32
           raise ArgumentError, "Invalid TLV: type #{type} for HRP: #{hrp} must be #{KEY_LENGTH} bytes."
         elsif type == TYPE_SPECIAL && hrp == NIP19::HRP_RELAY && length.zero?
           raise ArgumentError, "Invalid TLV: type #{type} for HRP: #{hrp} must not be empty."
+        end
+      end
+
+      # Check the character encoding of a relay or identifier value.
+      # NIP-19: a relay is ASCII. The naddr identifier ("d" tag) must be valid UTF-8.
+      # @param [String] hrp human-readable part.
+      # @param [Integer] type TLV type.
+      # @param [String] value raw value bytes.
+      # @raise [ArgumentError] if the encoding is invalid.
+      def self.check_value_encoding(hrp, type, value)
+        if type == TYPE_RELAY || (type == TYPE_SPECIAL && hrp == NIP19::HRP_RELAY)
+          raise ArgumentError, 'Invalid TLV: relay must be ASCII.' unless value.b.ascii_only?
+        elsif type == TYPE_SPECIAL && hrp == NIP19::HRP_EVENT_COORDINATE
+          unless value.dup.force_encoding(::Encoding::UTF_8).valid_encoding?
+            raise ArgumentError, 'Invalid TLV: identifier must be valid UTF-8.'
+          end
         end
       end
 
