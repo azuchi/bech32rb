@@ -43,6 +43,8 @@ module Bech32
       TYPE_KIND: Integer
       TYPES: Array[Integer]
 
+      SUPPORTED_TYPES: Hash[String, Array[Integer]]
+
       attr_reader hrp: String
       attr_reader entries: Array[TLVEntry]
 
