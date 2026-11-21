@@ -49,6 +49,41 @@ RSpec.describe Bech32::SilentPaymentAddr do
       expect(parsed.to_s).to eq(addr.to_s)
     end
 
+    it 'reads the first 66 bytes of a version 1-30 address and discards the rest' do
+      [1, 30].each do |version|
+        data = [version] + Bech32.convert_bits(([scan_key + spend_key].pack('H*') + "\x01\x02\x03\x04").unpack('C*'), 8, 5)
+        addr = described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))
+        expect(addr.version).to eq(version)
+        expect(addr.scan_key).to eq(scan_key)
+        expect(addr.spend_key).to eq(spend_key)
+      end
+    end
+
+    it 'rejects a version 0 address with extra bytes' do
+      data = [0] + Bech32.convert_bits(([scan_key + spend_key].pack('H*') + "\x01").unpack('C*'), 8, 5)
+      expect{described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))}.
+        to raise_error(ArgumentError, 'Invalid key size.')
+    end
+
+    it 'rejects a version 1-30 address shorter than 66 bytes' do
+      data = [1] + Bech32.convert_bits([scan_key + spend_key].pack('H*').unpack('C*')[0...65], 8, 5)
+      expect{described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))}.
+        to raise_error(ArgumentError, 'Invalid key size.')
+    end
+
+    it 'accepts an address of 1023 characters and rejects a longer one' do
+      # 'sp' + '1' + version + data + 6 checksum characters = 1023 characters
+      data = [1] + Bech32.convert_bits(([scan_key + spend_key].pack('H*') + ("\x00" * 567).b).unpack('C*'), 8, 5)
+      addr = Bech32.encode('sp', data, Bech32::Encoding::BECH32M)
+      expect(addr.length).to eq(1023)
+      expect(described_class.parse(addr).spend_key).to eq(spend_key)
+
+      data = [1] + Bech32.convert_bits(([scan_key + spend_key].pack('H*') + ("\x00" * 568).b).unpack('C*'), 8, 5)
+      addr = Bech32.encode('sp', data, Bech32::Encoding::BECH32M)
+      expect(addr.length).to be > 1023
+      expect{described_class.parse(addr)}.to raise_error(ArgumentError, 'addr must be at most 1023 characters.')
+    end
+
     it 'rejects an address with version 31' do
       # Build a bech32m string with version 31 directly, bypassing the constructor.
       data = [31] + Bech32.convert_bits([scan_key + spend_key].pack('H*').unpack('C*'), 8, 5)

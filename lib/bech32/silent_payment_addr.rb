@@ -32,20 +32,34 @@ module Bech32
       @spend_key = spend_key
     end
 
+    # Byte length of the data part (scan key + spend key) for version 0.
+    KEYS_LENGTH = 66
+
+    # Maximum length of an address string recommended by BIP-352.
+    MAX_LENGTH = 1023
+
     # Parse silent payment address.
+    # Following BIP-352, the data part of a version 0 address must be exactly 66 bytes.
+    # For versions 1 through 30, the first 66 bytes are read and the remaining bytes are discarded,
+    # so {#to_s} of such an address does not reproduce the original string if it had extra bytes.
     # @param [String] addr Silent payment address.
     # @return [Bech32::SilentPaymentAddr]
     # @raise [ArgumentError]
     def self.parse(addr)
       raise ArgumentError, "addr must be String." unless addr.is_a?(String)
-      hrp, data, spec = Bech32.decode(addr, addr.length)
+      raise ArgumentError, "addr must be at most #{MAX_LENGTH} characters." if addr.length > MAX_LENGTH
+      hrp, data, spec = Bech32.decode(addr, MAX_LENGTH)
       raise ArgumentError, "addr must be encoded with bech32m." unless spec == Bech32::Encoding::BECH32M
       raise ArgumentError, 'Invalid hrp.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET].include?(hrp)
       version = data[0]
       converted = Bech32.convert_bits(data[1..-1], 5, 8, false)
       raise ArgumentError, "Invalid data." if converted.nil?
-      keys = converted.pack('C*').unpack1('H*')
-      raise ArgumentError, "Invalid key size." unless keys.length == 132
+      if version.zero?
+        raise ArgumentError, "Invalid key size." unless converted.length == KEYS_LENGTH
+      else
+        raise ArgumentError, "Invalid key size." if converted.length < KEYS_LENGTH
+      end
+      keys = converted[0...KEYS_LENGTH].pack('C*').unpack1('H*')
       scan = keys[0...66]
       spend = keys[66..-1]
       Bech32::SilentPaymentAddr.new(hrp, version, scan, spend)
