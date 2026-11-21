@@ -59,6 +59,8 @@ module Bech32
     # check data length
     pos = bech.rindex(SEPARATOR)
     return nil if pos.nil? || pos < 1 || pos + 7 > bech.length || bech.length > max_length
+    # check hrp length (BIP-173: 1 to 83 characters), regardless of max_length
+    return nil if pos > HRP_MAX_LENGTH
     # check valid charset
     bech[pos+1..-1].each_char{|c|return nil unless CHARSET.include?(c)}
     # split hrp and data

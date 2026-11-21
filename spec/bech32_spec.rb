@@ -234,6 +234,21 @@ describe Bech32 do
     expect(Bech32.encode('bc', [], Bech32::Encoding::BECH32)).to eq('bc1gmk9yu')
   end
 
+  it 'rejects an hrp longer than 83 characters even with a larger max_length' do
+    # Build a string with a valid checksum and an 84-character hrp, which encode refuses to produce.
+    hrp = 'a' * 84
+    data = [0, 1, 2]
+    checksum = Bech32.create_checksum(hrp, data, Bech32::Encoding::BECH32)
+    bech = hrp + '1' + (data + checksum).map { |i| Bech32::CHARSET[i] }.join
+    expect(Bech32.verify_checksum(hrp, data + checksum)).to eq(Bech32::Encoding::BECH32)
+    expect(Bech32.decode(bech, 200)).to be_nil
+
+    # 83 characters is still accepted
+    hrp = 'a' * 83
+    bech = Bech32.encode(hrp, data, Bech32::Encoding::BECH32)
+    expect(Bech32.decode(bech, 200)).to eq([hrp, data, Bech32::Encoding::BECH32])
+  end
+
   it 'advanced length option checked' do
     # over character decode
     expect(Bech32.decode(OVER_MAXIMUM_CHARACTER[0])).to be_nil
