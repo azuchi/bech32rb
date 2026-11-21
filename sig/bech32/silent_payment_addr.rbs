@@ -21,5 +21,10 @@ module Bech32
 
     # Generate silent payment address string.
     def to_s: () -> String
+
+    private
+
+    # Check whether the key starts with 0x02 or 0x03.
+    def compressed_key?: (String key) -> bool
   end
 end

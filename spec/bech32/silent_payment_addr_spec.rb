@@ -37,6 +37,31 @@ RSpec.describe Bech32::SilentPaymentAddr do
       to raise_error(ArgumentError, 'spend_key must be a hex string.')
   end
 
+  describe 'key format' do
+    let(:scan_key) { '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4' }
+    let(:spend_key) { '025cc9856d6f8375350e123978daac200c260cb5b5ae83106cab90484dcd8fcf36' }
+
+    it 'accepts keys starting with 0x02 or 0x03' do
+      addr = described_class.new('sp', 0, '03' + scan_key[2..], '03' + spend_key[2..])
+      expect(described_class.parse(addr.to_s).scan_key).to eq('03' + scan_key[2..])
+    end
+
+    it 'rejects keys that are not compressed public keys' do
+      %w[00 01 04 05 06 07 ff].each do |prefix|
+        expect{described_class.new('sp', 0, prefix + scan_key[2..], spend_key)}.
+          to raise_error(ArgumentError, 'scan_key must be a compressed public key.')
+        expect{described_class.new('sp', 0, scan_key, prefix + spend_key[2..])}.
+          to raise_error(ArgumentError, 'spend_key must be a compressed public key.')
+      end
+    end
+
+    it 'rejects an address whose key is not a compressed public key when parsing' do
+      data = [0] + Bech32.convert_bits(['04' + scan_key[2..] + spend_key].pack('H*').unpack('C*'), 8, 5)
+      expect{described_class.parse(Bech32.encode('sp', data, Bech32::Encoding::BECH32M))}.
+        to raise_error(ArgumentError, 'scan_key must be a compressed public key.')
+    end
+  end
+
   describe 'version' do
     let(:scan_key) { '0220bcfac5b99e04ad1a06ddfb016ee13582609d60b6291e98d01a9bc9a16c96d4' }
     let(:spend_key) { '025cc9856d6f8375350e123978daac200c260cb5b5ae83106cab90484dcd8fcf36' }

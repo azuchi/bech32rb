@@ -28,6 +28,10 @@ module Bech32
       raise ArgumentError, 'spend_key must be a hex string.' unless Bech32.hex_string?(spend_key)
       raise ArgumentError, 'scan_key must be 33 bytes.' unless [scan_key].pack('H*').bytesize == 33
       raise ArgumentError, 'spend_key must be 33 bytes.' unless [spend_key].pack('H*').bytesize == 33
+      # BIP-352: keys are serialized in SEC1 compressed form (0x02 or 0x03 followed by the x coordinate).
+      # Whether the x coordinate is on the curve is not checked.
+      raise ArgumentError, 'scan_key must be a compressed public key.' unless compressed_key?(scan_key)
+      raise ArgumentError, 'spend_key must be a compressed public key.' unless compressed_key?(spend_key)
       @hrp = hrp
       @version = version
       @scan_key = scan_key
@@ -74,6 +78,14 @@ module Bech32
       spend = keys[66..-1]
       Bech32::SilentPaymentAddr.new(hrp, version, scan, spend)
     end
+
+    # Check whether the first byte of the 33-byte hex key is 0x02 or 0x03.
+    # @param [String] key public key with hex format.
+    # @return [Boolean]
+    def compressed_key?(key)
+      [0x02, 0x03].include?([key].pack('H*').getbyte(0))
+    end
+    private :compressed_key?
 
     # Get silent payment address.
     # @return [String]
