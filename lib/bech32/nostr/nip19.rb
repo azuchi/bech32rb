@@ -16,14 +16,20 @@ module Bech32
       TLV_PREFIXES = [HRP_PROFILE, HRP_EVENT, HRP_RELAY, HRP_EVENT_COORDINATE]
       ALL_PREFIXES = BARE_PREFIXES + TLV_PREFIXES
 
+      # Maximum length of a NIP-19 string (NIP-19: "SHOULD be limited in size to 5000 characters").
+      MAX_LENGTH = 5000
+
       module_function
 
       # Decode nip19 string.
       # @param [String] string Bech32 string.
       # @return [BareEntity]
       # @return [TLVEntity]
+      # @raise [ArgumentError] if the string is invalid or longer than MAX_LENGTH characters.
       def decode(string)
-        hrp, data, spec = Bech32.decode(string, string.length)
+        raise ArgumentError, 'nip19 string must be String.' unless string.is_a?(String)
+        raise ArgumentError, "nip19 string must be at most #{MAX_LENGTH} characters." if string.length > MAX_LENGTH
+        hrp, data, spec = Bech32.decode(string, MAX_LENGTH)
 
         raise ArgumentError, 'Invalid nip19 string.' if hrp.nil?
         raise ArgumentError, 'Invalid bech32 spec.' unless spec == Bech32::Encoding::BECH32

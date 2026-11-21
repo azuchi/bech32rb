@@ -202,7 +202,7 @@ module Bech32
       # The entity is checked against the same rules as {.parse}, so that the result can be decoded.
       # @return [String] bech32 string.
       # @raise [ArgumentError] if an entry type is unsupported for the HRP, a value has an invalid length
-      # or encoding, or a required entry is missing.
+      # or encoding, a required entry is missing, or the result is longer than NIP19::MAX_LENGTH characters.
       def encode
         supported = SUPPORTED_TYPES[hrp]
         entries.each do |e|
@@ -215,7 +215,11 @@ module Bech32
         end
         TLVEntity.check_required_types(hrp, entries)
         data = payloads.join
-        Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
+        bech32 = Bech32.encode(hrp, Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
+        if bech32.length > NIP19::MAX_LENGTH
+          raise ArgumentError, "nip19 string must be at most #{NIP19::MAX_LENGTH} characters."
+        end
+        bech32
       end
 
       # Check the byte length of a TLV value.

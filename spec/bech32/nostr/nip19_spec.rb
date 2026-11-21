@@ -108,6 +108,41 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'string length' do
+      let(:pubkey) { '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d' }
+
+      # nprofile with a pubkey and +count+ relays of 200 bytes each.
+      def nprofile_entries(count)
+        relays = Array.new(count) { |i| Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, "wss://#{i.to_s.rjust(3, '0')}" + 'r' * 191) }
+        [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, pubkey)] + relays
+      end
+
+      it 'decodes a long string up to 5000 characters' do
+        bech32 = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, nprofile_entries(15)).encode
+        expect(bech32.length).to be > 90
+        expect(bech32.length).to be <= 5000
+        expect(described_class.decode(bech32).entries.size).to eq(16)
+      end
+
+      it 'rejects a string longer than 5000 characters' do
+        # Build a string with a valid checksum directly, since encode refuses to produce it.
+        data = nprofile_entries(16).map { |e| e.to_payload(Bech32::Nostr::NIP19::HRP_PROFILE) }.join
+        bech32 = Bech32.encode('nprofile', Bech32.convert_bits(data.unpack('C*'), 8, 5), Bech32::Encoding::BECH32)
+        expect(bech32.length).to be > 5000
+        expect { described_class.decode(bech32) }.
+          to raise_error(ArgumentError, 'nip19 string must be at most 5000 characters.')
+      end
+
+      it 'refuses to encode a string longer than 5000 characters' do
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, nprofile_entries(16)).encode }.
+          to raise_error(ArgumentError, 'nip19 string must be at most 5000 characters.')
+      end
+
+      it 'rejects a non-String' do
+        expect { described_class.decode(nil) }.to raise_error(ArgumentError, 'nip19 string must be String.')
+      end
+    end
+
     context 'string values' do
       let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
 

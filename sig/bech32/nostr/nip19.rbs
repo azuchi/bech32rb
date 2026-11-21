@@ -12,6 +12,7 @@ module Bech32
       BARE_PREFIXES: Array[String]
       TLV_PREFIXES: Array[String]
       ALL_PREFIXES: Array[String]
+      MAX_LENGTH: Integer
 
       # Decode NIP-19 bech32 string.
       def self.decode: (String string) -> (BareEntity | TLVEntity)
