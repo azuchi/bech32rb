@@ -140,7 +140,7 @@ RSpec.describe Bech32::Nostr::NIP19 do
       it do
         data = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 1].pack('CC') + 'x'
         expect { Bech32::Nostr::TLVEntity.parse('npub', data) }.
-          to raise_error(ArgumentError, 'Type: 0 does not supported for HRP: npub')
+          to raise_error(ArgumentError, 'HRP npub is unsupported.')
       end
     end
 
@@ -164,6 +164,29 @@ RSpec.describe Bech32::Nostr::NIP19 do
         # nprofile with a pubkey and an author (type 2) entry
         entity = described_class.decode('nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gzyqalp33lewf5vdq847t6te0wvnags0gs0mu72kz8938tn24wlfze69gy888')
         expect(entity.entries.map(&:type)).to eq([Bech32::Nostr::TLVEntity::TYPE_SPECIAL])
+      end
+    end
+
+    context 'missing required tlv' do
+      let(:special) { [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 32].pack('CC') + ("\x01" * 32).b }
+      let(:unknown) { [9, 3].pack('CC') + 'abc' }
+
+      it 'rejects an entity that has only unknown tlvs' do
+        %w[nprofile nevent nrelay naddr].each do |hrp|
+          expect { Bech32::Nostr::TLVEntity.parse(hrp, unknown) }.
+            to raise_error(ArgumentError, "Invalid TLV: missing required type 0 for HRP: #{hrp}")
+        end
+      end
+
+      it 'rejects an naddr without author or kind' do
+        author = [Bech32::Nostr::TLVEntity::TYPE_AUTHOR, 32].pack('CC') + ("\x02" * 32).b
+        kind = [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N')
+        expect { Bech32::Nostr::TLVEntity.parse('naddr', special + kind) }.
+          to raise_error(ArgumentError, 'Invalid TLV: missing required type 2 for HRP: naddr')
+        expect { Bech32::Nostr::TLVEntity.parse('naddr', special + author) }.
+          to raise_error(ArgumentError, 'Invalid TLV: missing required type 3 for HRP: naddr')
+        entity = Bech32::Nostr::TLVEntity.parse('naddr', special + unknown + author + kind)
+        expect(entity.entries.map(&:type)).to eq([0, 2, 3])
       end
     end
 
@@ -231,14 +254,15 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
 
       it 'rejects a kind whose length is not 4 bytes when parsing' do
+        id = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 32].pack('CC') + ("\x01" * 32).b
         [0, 1, 3, 5].each do |len|
-          data = [Bech32::Nostr::TLVEntity::TYPE_KIND, len].pack('CC') + ("\x00" * len).b
+          data = id + [Bech32::Nostr::TLVEntity::TYPE_KIND, len].pack('CC') + ("\x00" * len).b
           expect { Bech32::Nostr::TLVEntity.parse(Bech32::Nostr::NIP19::HRP_EVENT, data) }.
             to raise_error(ArgumentError, 'Invalid TLV: kind must be 4 bytes.')
         end
-        data = [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N')
+        data = id + [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N')
         entity = Bech32::Nostr::TLVEntity.parse(Bech32::Nostr::NIP19::HRP_EVENT, data)
-        expect(entity.entries[0].value).to eq(30023)
+        expect(entity.entries[1].value).to eq(30023)
       end
     end
   end

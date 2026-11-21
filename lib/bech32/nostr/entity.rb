@@ -116,13 +116,21 @@ module Bech32
 
       TYPES = [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND]
 
-      # TLV types each HRP supports.
+      # TLV types each HRP supports. Other types are ignored when parsing (NIP-19).
       SUPPORTED_TYPES = {
-        NIP19::HRP_PROFILE => [TYPE_SPECIAL, TYPE_RELAY],
-        NIP19::HRP_EVENT => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND],
-        NIP19::HRP_RELAY => [TYPE_SPECIAL],
-        NIP19::HRP_EVENT_COORDINATE => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND]
-      }
+        NIP19::HRP_PROFILE => [TYPE_SPECIAL, TYPE_RELAY].freeze,
+        NIP19::HRP_EVENT => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND].freeze,
+        NIP19::HRP_RELAY => [TYPE_SPECIAL].freeze,
+        NIP19::HRP_EVENT_COORDINATE => [TYPE_SPECIAL, TYPE_RELAY, TYPE_AUTHOR, TYPE_KIND].freeze
+      }.freeze
+
+      # TLV types each HRP requires (NIP-19).
+      REQUIRED_TYPES = {
+        NIP19::HRP_PROFILE => [TYPE_SPECIAL].freeze,
+        NIP19::HRP_EVENT => [TYPE_SPECIAL].freeze,
+        NIP19::HRP_RELAY => [TYPE_SPECIAL].freeze,
+        NIP19::HRP_EVENT_COORDINATE => [TYPE_SPECIAL, TYPE_AUTHOR, TYPE_KIND].freeze
+      }.freeze
 
       attr_reader :hrp
       attr_reader :entries
@@ -146,6 +154,7 @@ module Bech32
       # @param [String] data Entity data(binary format).
       # @return [TLVEntity]
       def self.parse(hrp, data)
+        supported = SUPPORTED_TYPES.fetch(hrp) { raise ArgumentError, "HRP #{hrp} is unsupported." }
         buf = ::StringIO.new(data)
         entries = []
         until buf.eof?
@@ -156,47 +165,30 @@ module Bech32
           raise ArgumentError, "Invalid TLV: truncated value." if value.nil? ? len > 0 : value.bytesize < len
           value ||= ''
           # NIP-19: TLVs that are not recognized or supported should be ignored, rather than causing an error.
-          next if SUPPORTED_TYPES.key?(hrp) && !SUPPORTED_TYPES[hrp].include?(type)
+          next unless supported.include?(type)
 
-          case type
-          when TYPE_SPECIAL # special
-            case hrp
-            when NIP19::HRP_PROFILE
-              entries << TLVEntry.new(type, value.unpack1('H*'), 'pubkey')
-            when NIP19::HRP_RELAY
-              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
-            when NIP19::HRP_EVENT
-              entries << TLVEntry.new(type, value.unpack1('H*'), 'id')
-            when NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'identifier')
-            else
-              raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
-            end
-          when TYPE_RELAY # relay
-            case hrp
-            when NIP19::HRP_PROFILE, NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
-            else
-              raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
-            end
-          when TYPE_AUTHOR # author
-            case hrp
-            when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              entries << TLVEntry.new(type, value.unpack1('H*'), 'author')
-            else
-              raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
-            end
-          when TYPE_KIND # kind
-            case hrp
-            when NIP19::HRP_EVENT, NIP19::HRP_EVENT_COORDINATE
-              raise ArgumentError, 'Invalid TLV: kind must be 4 bytes.' unless value.bytesize == 4
-              entries << TLVEntry.new(type, value.unpack1('N'), 'kind')
-            else
-              raise ArgumentError, "Type: #{type} does not supported for HRP: #{hrp}"
-            end
-          else
-            raise ArgumentError, "Unknown TLV type: #{type}"
-          end
+          entries << case type
+                     when TYPE_SPECIAL
+                       case hrp
+                       when NIP19::HRP_PROFILE then TLVEntry.new(type, value.unpack1('H*'), 'pubkey')
+                       when NIP19::HRP_RELAY then TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
+                       when NIP19::HRP_EVENT then TLVEntry.new(type, value.unpack1('H*'), 'id')
+                       else TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'identifier')
+                       end
+                     when TYPE_RELAY
+                       TLVEntry.new(type, value.force_encoding(::Encoding::UTF_8), 'relay')
+                     when TYPE_AUTHOR
+                       TLVEntry.new(type, value.unpack1('H*'), 'author')
+                     else # TYPE_KIND
+                       raise ArgumentError, 'Invalid TLV: kind must be 4 bytes.' unless value.bytesize == 4
+                       TLVEntry.new(type, value.unpack1('N'), 'kind')
+                     end
+        end
+
+        REQUIRED_TYPES[hrp].each do |required|
+          next if entries.any? { |e| e.type == required }
+
+          raise ArgumentError, "Invalid TLV: missing required type #{required} for HRP: #{hrp}"
         end
 
         TLVEntity.new(hrp, entries)
