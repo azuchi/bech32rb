@@ -190,6 +190,71 @@ RSpec.describe Bech32::Nostr::NIP19 do
       end
     end
 
+    context 'tlv value length' do
+      it 'rejects a pubkey, id or author that is not 32 bytes when parsing' do
+        [0, 1, 31, 33].each do |len|
+          special = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, len].pack('CC') + ("\x01" * len).b
+          %w[nprofile nevent].each do |hrp|
+            expect { Bech32::Nostr::TLVEntity.parse(hrp, special) }.
+              to raise_error(ArgumentError, "Invalid TLV: type 0 for HRP: #{hrp} must be 32 bytes.")
+          end
+          id = [Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 32].pack('CC') + ("\x01" * 32).b
+          author = [Bech32::Nostr::TLVEntity::TYPE_AUTHOR, len].pack('CC') + ("\x02" * len).b
+          expect { Bech32::Nostr::TLVEntity.parse('nevent', id + author) }.
+            to raise_error(ArgumentError, 'Invalid TLV: type 2 for HRP: nevent must be 32 bytes.')
+        end
+      end
+
+      it 'rejects a 1-byte event id when decoding' do
+        bech32 = Bech32.encode('nevent', Bech32.convert_bits([0, 1, 0xab], 8, 5), Bech32::Encoding::BECH32)
+        expect { described_class.decode(bech32) }.
+          to raise_error(ArgumentError, 'Invalid TLV: type 0 for HRP: nevent must be 32 bytes.')
+      end
+
+      it 'rejects an empty nrelay relay but accepts an empty naddr identifier' do
+        expect { Bech32::Nostr::TLVEntity.parse('nrelay', [0, 0].pack('CC')) }.
+          to raise_error(ArgumentError, 'Invalid TLV: type 0 for HRP: nrelay must not be empty.')
+        author = [Bech32::Nostr::TLVEntity::TYPE_AUTHOR, 32].pack('CC') + ("\x02" * 32).b
+        kind = [Bech32::Nostr::TLVEntity::TYPE_KIND, 4].pack('CC') + [30023].pack('N')
+        entity = Bech32::Nostr::TLVEntity.parse('naddr', [0, 0].pack('CC') + author + kind)
+        expect(entity.entries[0].value).to eq('')
+      end
+
+      it 'rejects a pubkey, id or author that is not 32 bytes when encoding' do
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'ab')]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: type 0 for HRP: nevent must be 32 bytes.')
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'ab' * 32),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, 'cd' * 31)
+        ]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: type 2 for HRP: nevent must be 32 bytes.')
+      end
+    end
+
+    context 'encoding validation' do
+      let(:pubkey) { '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d' }
+
+      it 'rejects an entity without the required types' do
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'x')]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT_COORDINATE, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: missing required type 2 for HRP: naddr')
+        entries = [Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, 'wss://relay.example')]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, entries).encode }.
+          to raise_error(ArgumentError, 'Invalid TLV: missing required type 0 for HRP: nevent')
+      end
+
+      it 'rejects a type the hrp does not support' do
+        entries = [
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, pubkey),
+          Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, pubkey)
+        ]
+        expect { Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_PROFILE, entries).encode }.
+          to raise_error(ArgumentError, 'Type 2 is unsupported for HRP: nprofile')
+      end
+    end
+
     context 'tlv value encoding' do
       let(:author) { '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194' }
 

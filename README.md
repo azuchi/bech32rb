@@ -157,11 +157,12 @@ entity.encode
 => 'npub10elfcs4fr0l0r8af98jlmgdh9c8tcxjvz9qkw038js35mp4dma8qzvjptg'
 
 # Encode tlv entity
+entry_id = Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_SPECIAL, 'b9f5441e45ca39179320e0031cfb18e34078673dcc3d3e3a3b3a981760aa5696')
 entry_relay = Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_RELAY, 'wss://relay.nostr.example')
 entry_author = Bech32::Nostr::TLVEntry.new(Bech32::Nostr::TLVEntity::TYPE_AUTHOR, '97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322')
-entity = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, [entry_relay, entry_author])
+entity = Bech32::Nostr::TLVEntity.new(Bech32::Nostr::NIP19::HRP_EVENT, [entry_id, entry_relay, entry_author])
 entity.encode
-=> 'nevent1qyvhwumn8ghj7un9d3shjtnwdaehgu3wv4uxzmtsd3jsygyhcu9ygdn2v56uz3dnx0uh865xmlwz675emfsccsxxguz6mx8rygstv78u'
+=> 'nevent1qqstna2yrezu5wghjvswqqculvvwxsrcvu7uc0f78gan4xqhvz49d9spr9mhxue69uhhyetvv9ujumn0wd68ytn90psk6urvv5pzp978pfzrv6n9xhq5tvenl9e74pklmskh4xw6vxxyp3j8qkke3cez9uxngd'
 ```
 
 ### CLI
