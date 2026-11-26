@@ -76,10 +76,9 @@ module Bech32
       @hrp, data, spec = Bech32.decode(addr)
       raise ArgumentError, 'Invalid address.' if hrp.nil? || data[0].nil? || ![HRP_MAINNET, HRP_TESTNET, HRP_REGTEST].include?(hrp)
       @ver = data[0]
-      raise ArgumentError, 'Invalid witness version' if @ver > 16
       @prog = Bech32.convert_bits(data[1..-1], 5, 8, false)
-      raise ArgumentError, 'Invalid witness program' if @prog.nil? || @prog.length < 2 || @prog.length > 40
-      raise ArgumentError, 'Invalid witness program with version 0' if @ver == 0 && (@prog.length != 20 && @prog.length != 32)
+      raise ArgumentError, 'Invalid witness program' if @prog.nil?
+      validate_witness(@ver, @prog)
       raise ArgumentError, 'Witness version and encoding spec do not match' if (@ver == 0 && spec != Bech32::Encoding::BECH32) || (@ver != 0 && spec != Bech32::Encoding::BECH32M)
     end
 
