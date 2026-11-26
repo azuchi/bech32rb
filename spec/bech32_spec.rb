@@ -203,6 +203,35 @@ describe Bech32 do
     expect{Bech32::SegwitAddr.new.script_pubkey = nil}.to raise_error(ArgumentError, 'script_pubkey must be String.')
   end
 
+  it 'reject invalid witness version or program on encode' do
+    [
+      [0, [0] * 33, 'Invalid witness program with version 0'],
+      [0, [0] * 16, 'Invalid witness program with version 0'],
+      [17, [0] * 32, 'Invalid witness version'],
+      [-1, [0] * 32, 'Invalid witness version'],
+      [nil, [0] * 32, 'Invalid witness version'],
+      [1, [0] * 41, 'Invalid witness program'],
+      [1, [0], 'Invalid witness program'],
+      [1, [], 'Invalid witness program'],
+      [1, [256, 0], 'Invalid witness program'],
+      [1, nil, 'Invalid witness program'],
+    ].each do |ver, prog, message|
+      segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.ver = ver
+      segwit_addr.prog = prog
+      expect{segwit_addr.addr}.to raise_error(ArgumentError, message)
+      expect{segwit_addr.to_script_pubkey}.to raise_error(ArgumentError, message)
+    end
+    # boundary values are valid and round-trip
+    [[0, [0] * 20], [0, [0] * 32], [1, [0xff] * 2], [16, [0] * 40]].each do |ver, prog|
+      segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.ver = ver
+      segwit_addr.prog = prog
+      decoded = Bech32::SegwitAddr.new(segwit_addr.addr)
+      expect([decoded.ver, decoded.prog]).to eq([ver, prog])
+    end
+  end
+
   OVER_MAXIMUM_CHARACTER = [
       'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w',
       'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmm7s34n6'

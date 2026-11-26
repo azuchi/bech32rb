@@ -18,7 +18,9 @@ module Bech32
     end
 
     # Returns segwit script pubkey which generated from witness version and witness program.
+    # @raise [ArgumentError] if the witness version or program is invalid.
     def to_script_pubkey
+      validate_witness(ver, prog)
       v = ver == 0 ? ver : ver + 0x50
       ([v, prog.length] + prog).pack('C*').unpack("H*").first
     end
@@ -41,19 +43,34 @@ module Bech32
               raise ArgumentError, 'Invalid segwit script pubkey.'
             end
       raise ArgumentError, 'Invalid segwit script pubkey.' unless push_len == prog.length
-      raise ArgumentError, 'Invalid witness program' if prog.length < 2 || prog.length > 40
-      raise ArgumentError, 'Invalid witness program with version 0' if ver == 0 && prog.length != 20 && prog.length != 32
+      validate_witness(ver, prog)
       @ver = ver
       @prog = prog
     end
 
     # Returns segwit address string which generated from hrp, witness version and witness program.
+    # @raise [ArgumentError] if the witness version or program is invalid.
     def addr
+      validate_witness(ver, prog)
       spec = (ver == 0 ? Bech32::Encoding::BECH32 : Bech32::Encoding::BECH32M)
       Bech32.encode(hrp, [ver] + Bech32.convert_bits(prog, 8, 5), spec)
     end
 
     private
+
+    # Check the witness version and program (BIP-141).
+    # @param [Integer] ver witness version.
+    # @param [Array<Integer>] prog witness program.
+    # @raise [ArgumentError] if the version is not 0 to 16, or the program is not 2 to 40 bytes
+    # (20 or 32 bytes for version 0).
+    def validate_witness(ver, prog)
+      raise ArgumentError, 'Invalid witness version' unless ver.is_a?(Integer) && ver.between?(0, 16)
+      unless prog.is_a?(Array) && prog.all? { |b| b.is_a?(Integer) && b.between?(0, 0xff) }
+        raise ArgumentError, 'Invalid witness program'
+      end
+      raise ArgumentError, 'Invalid witness program' if prog.length < 2 || prog.length > 40
+      raise ArgumentError, 'Invalid witness program with version 0' if ver == 0 && prog.length != 20 && prog.length != 32
+    end
 
     def parse_addr(addr)
       @hrp, data, spec = Bech32.decode(addr)
