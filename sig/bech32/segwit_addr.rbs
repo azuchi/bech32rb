@@ -22,6 +22,9 @@ module Bech32
 
     private
 
+    # Check witness version and program.
+    def validate_witness: (Integer? ver, Array[Integer]? prog) -> void
+
     # Parse address string into hrp, version and program.
     def parse_addr: (String addr) -> void
   end
